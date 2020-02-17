@@ -80,7 +80,7 @@ def run_python_in_docker(callback, code):
         file.write("{}".format(code))
     print_log("Container created.")
     container = client.containers.create(config.DOCKER_IMAGE, "python /temp/{}".format(
-        file_name), tty=True, detach=False,  volumes={tmp_dir: {"bind": "/temp", "mode": "ro"}}, mem_limit="50m", memswap_limit="50m", oom_kill_disable=True, nano_cpus=int(0.1*1/1e-9))
+        file_name), tty=True, detach=False, network_mode="none",  volumes={tmp_dir: {"bind": "/temp", "mode": "ro"}}, mem_limit="50m", memswap_limit="50m", oom_kill_disable=True, nano_cpus=int(0.1*1/1e-9))
     # container = client.containers.create("python", "uname -a".format(
     #     file_name), tty=True, detach=False)
     thd = Thread(target=execute_daemon_calc, args=(
