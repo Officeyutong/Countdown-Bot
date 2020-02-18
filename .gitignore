@@ -6,6 +6,7 @@ plugins/data/*
 cats.json
 config.py
 data.json
+/plugins/zxhdmx/data.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
