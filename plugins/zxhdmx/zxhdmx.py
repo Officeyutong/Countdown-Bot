@@ -350,7 +350,7 @@ class Game:
         msg += "处罚内容为:\n"
         if selected_item["type"] == "simple":
             msg += selected_item["content"]+"\n"
-            msg += "完成处罚的玩家请使用指令 \"接受\" 确认。\n或者使用 使用物品 [物品ID] 使用物品."
+            msg += "完成处罚的玩家请使用指令 \"接受\" 确认。\n或者使用 \"使用物品 [物品ID]\" 使用物品."
             self.send_message(msg)
             self.stage = GameStage.PUNISH
         elif selected_item["type"] == "item":
