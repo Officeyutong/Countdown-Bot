@@ -3,6 +3,7 @@ from cqhttp import CQHttp
 from enum import Enum
 from global_vars import VARS
 from collections import namedtuple
+from typing import Dict, List, Set, Callable, Union
 import sys
 import global_vars
 import random
@@ -141,19 +142,21 @@ class Game:
     next_punish: set = None
 
     def __init__(self, bot, group):
-        self.group = group
-        self.players = set()
-        self.stage = GameStage.WAITING_TO_START
-        self.bot = bot
-        self.join_at_next = []
-        self.exit_at_next = []
-        self.non_played = set()
-        self.points = {}
-        self.adjoint_punish = set()
-        self.limits = dict()
-        self.player_items = dict()
-        self.countdowns = []
-        self.next_punish = set()
+        self.group: int = group
+        self.players: Set[int] = set()
+        self.stage: GameStage = GameStage.WAITING_TO_START
+        self.bot: CQHttp = bot
+        self.join_at_next: List[int] = []
+        self.exit_at_next: List[int] = []
+        self.non_played: List[int] = set()
+        self.points: Dict[int, int] = {}
+        self.adjoint_punish: Set[int] = set()
+        self.limits: Dict[int, List[str]] = dict()
+        self.player_items: Dict[int, List[str]] = dict()
+        self.countdowns: List[List[Union[int, Callable[[], None]]]] = []
+        self.next_punish: Set[int] = set()
+        # 接下来每一局这些玩家要自动加上给定的点数
+        self.add_points: Dict[int, int] = dict()
         # self.punishes = set()
         # self.send_message("群 {} 的游戏创建成功qwq".format(self.group))
 
@@ -252,6 +255,8 @@ class Game:
                     del self.limits[player_id]
                 if player_id in self.adjoint_punish:
                     self.adjoint_punish.remove(player_id)
+                if player_id in self.add_points:
+                    self.add_points.pop(player_id)
                 self.send_message("[CQ:at,qq={}] 成功退出游戏qwq，当前状态:\n".format(
                     player_id)+self.get_status())
             else:
@@ -320,6 +325,8 @@ class Game:
         val = random.randint(1, 100)
         while val == min(self.points.values(), default=101) or val == max(self.points.values(), default=-1):
             val = random.randint(1, 100)
+        if player_id in self.add_points:
+            val = min(val, val+self.add_points[player_id])
         self.points[player_id] = val
         self.non_played.remove(player_id)
         self.send_message(
@@ -384,6 +391,10 @@ class Game:
                 [punish["rounds"]+1, lambda: self.limits.pop(player_id, None)])
         elif punish["type"] == "next_punish":
             self.next_punish = self.punish_list.copy()
+        elif punish["type"] == "add_points":
+            self.countdowns.append(
+                [int(punish["rounds"])+1, lambda: self.add_points.pop(player_id) if player_id in self.add_points else None])
+            self.add_points[player_id] = int(punish["val"])
     # def _handle_
 
     def _give_item(self, player_id: int, item_id: str):

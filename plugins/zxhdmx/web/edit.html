@@ -208,6 +208,7 @@
                                         <option>punish_until_min</option>
                                         <option>problem_set_limit</option>
                                         <option>next_punish</option>
+                                        <option>add_points</option>
                                     </select>
                                 </td>
                                 <td style="width: 250px">
@@ -242,6 +243,21 @@
                                     <div v-else-if="value.type=='next_punish'">
 
                                     </div>
+                                    <div v-else-if="value.type=='add_points'">
+                                        <div class="ui labeled input" style="width: 50px">
+                                            <div class="ui label">
+                                                持续轮数:
+                                            </div>
+                                            <input v-model="value.rounds">
+                                        </div>
+                                        <div class="ui labeled input" style="width: 50px">
+                                            <div class="ui label">
+                                                限定值:
+                                            </div>
+                                            <input v-model="value.val">
+                                        </div>
+                                    </div>
+
                                 </td>
                                 <td style="width: 50px">
                                     <div class="ui red circular icon button" v-on:click="Vue.delete(data.punish,key)">
