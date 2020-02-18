@@ -393,8 +393,10 @@ class Game:
 
     def _game_end(self):
         self.send_message("本轮游戏结束.")
-        self.points.clear()
-        self.punish_list.clear()
+        if self.points:
+            self.points.clear()
+        if self.punish_list:
+            self.punish_list.clear()
         self.selector = -1
         # 倒计时函数
         for item in self.countdowns:
