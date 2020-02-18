@@ -216,6 +216,9 @@ class Game:
         if self.stage != GameStage.DISTRIBUTE_POINTS:
             return
         if self.non_played:
+            if len(self.points) < 1:
+                self.send_message("必须至少有一个玩家进行拼点才可跳过!")
+                return
             self.non_played.clear()
             self._handle_play_end()
 
