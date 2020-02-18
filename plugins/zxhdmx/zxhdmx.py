@@ -157,6 +157,7 @@ class Game:
         self.next_punish: Set[int] = set()
         # 接下来每一局这些玩家要自动加上给定的点数
         self.add_points: Dict[int, int] = dict()
+
         # self.punishes = set()
         # self.send_message("群 {} 的游戏创建成功qwq".format(self.group))
 
@@ -326,11 +327,21 @@ class Game:
         while val == min(self.points.values(), default=101) or val == max(self.points.values(), default=-1):
             val = random.randint(1, 100)
         if player_id in self.add_points:
-            val = min(val, val+self.add_points[player_id])
+            raw_points = val
+            val = min(100, val+self.add_points[player_id])
+            val = max(1, val)
+            self.send_message(
+                f"[CQ:at,qq={player_id}],原始点数: {raw_points},惩罚点数{val}")
+        if val > 70:
+            joke_message = "看起来很不错呢qwq"
+        elif val < 30:
+            joke_message = "看起来有点凉呢qwq"
+        else:
+            joke_message = "qwq"
         self.points[player_id] = val
         self.non_played.remove(player_id)
         self.send_message(
-            "[CQ:at,qq={}] 你的点数为 {} ，看起来很不错呢qwq\n{}".format(player_id, val, self.get_status_distribute()))
+            f"[CQ:at,qq={player_id}] 你的点数为 {val} ,{joke_message}\n{self.get_status_distribute()}")
         if not self.non_played:
             self._handle_play_end()
 
@@ -388,12 +399,21 @@ class Game:
         elif punish["type"] == "problem_set_limit":
             self.limits[player_id] = punish["val"].split("|")
             self.countdowns.append(
-                [punish["rounds"]+1, lambda: self.limits.pop(player_id, None)])
+                [
+                    punish["rounds"]+1, 
+                    lambda: self.limits.pop(player_id, None),
+                    f"[CQ:at,qq={player_id}] 的题库限制 {punish['val']} 已经解除"
+                    ])
         elif punish["type"] == "next_punish":
             self.next_punish = self.punish_list.copy()
         elif punish["type"] == "add_points":
             self.countdowns.append(
-                [int(punish["rounds"])+1, lambda: self.add_points.pop(player_id) if player_id in self.add_points else None])
+                [
+                    int(punish["rounds"])+1,
+                    lambda: self.add_points.pop(
+                        player_id) if player_id in self.add_points else None,
+                    f"[CQ:at,qq={player_id}] 的每局增加 {punish['val']} 点数已经解除"
+                ])
             self.add_points[player_id] = int(punish["val"])
     # def _handle_
 
@@ -417,6 +437,8 @@ class Game:
             item[0] -= 1
             if item[0] == 0:
                 item[1]()
+                if len(item) == 3:
+                    self.send_message(item[2])
         self.countdowns = list(filter(lambda x: x[0] != 0, self.countdowns))
         self.stage = GameStage.WAITING_TO_START
         for x in self.join_at_next:

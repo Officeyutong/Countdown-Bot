@@ -197,9 +197,10 @@
                             <tr class="ui" v-for="(value,key,index) in data.punish">
                                 <td style="width: 50px">{{index+1}}</td>
                                 <td style="width: 170px">
-                                    <div class="ui input">
+                                    {[key]}
+                                    <!-- <div class="ui input">
                                         <input v-model="key">
-                                    </div>
+                                    </div> -->
                                 </td>
                                 <td style="width: 200px">
                                     <!-- <div class="ui fluid input"><input type="text" v-model="value.type"></div> -->
@@ -227,35 +228,45 @@
 
                                     </div>
                                     <div v-else-if="value.type=='problem_set_limit'">
-                                        <div class="ui labeled input" style="width: 50px">
-                                            <div class="ui label">
-                                                持续轮数:
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    持续轮数:
+                                                </div>
+                                                <input v-model="value.rounds">
                                             </div>
-                                            <input v-model="value.rounds">
-                                        </div><br>
-                                        <div class="ui labeled input" style="width: 50px">
-                                            <div class="ui label">
-                                                限定值:
+                                        </span>
+                                        <br>
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    限定值:
+                                                </div>
+                                                <input v-model="value.val">
                                             </div>
-                                            <input v-model="value.val">
-                                        </div>
+                                        </span>
                                     </div>
                                     <div v-else-if="value.type=='next_punish'">
 
                                     </div>
                                     <div v-else-if="value.type=='add_points'">
-                                        <div class="ui labeled input" style="width: 50px">
-                                            <div class="ui label">
-                                                持续轮数:
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    持续轮数:
+                                                </div>
+                                                <input v-model="value.rounds">
                                             </div>
-                                            <input v-model="value.rounds">
-                                        </div>
-                                        <div class="ui labeled input" style="width: 50px">
-                                            <div class="ui label">
-                                                限定值:
+                                        </span>
+                                        <br>
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    限定值:
+                                                </div>
+                                                <input v-model="value.val">
                                             </div>
-                                            <input v-model="value.val">
-                                        </div>
+                                        </span>
                                     </div>
 
                                 </td>
