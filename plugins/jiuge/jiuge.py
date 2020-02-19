@@ -183,7 +183,10 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
                         print(urlf.text)
                         image_file = urlf.json()["data"]
                         buf.write(
-                            f"[CQ:image,file=http://jiuge.thunlp.cn/share/new/{image_file}]\n[CQ:image,file=http://jiuge.thunlp.cn/share/new/{image_file.replace('.jpg','ew.jpg')}]")
+                            f"http://47.52.252.160/pic_share/{image_file}")
+                        buf.write(
+                            f"[CQ:image,file=http://jiuge.thunlp.cn/share/new/{image_file}]")
+
                 bot.send(context, buf.getvalue())
             except Exception as ex:
                 # import traceback
@@ -192,7 +195,7 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
 
         handle_thread = threading.Thread(target=handle)
         handle_thread.start()
-        while time.time()-begin_time < config.TIME_LIMIT:
+        while time.time()-begin_time < config.TIME_LIMIT and handle_thread.is_alive():
             time.sleep(0.1)
         if handle_thread.is_alive():
             stop_thread(handle_thread)
