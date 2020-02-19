@@ -161,11 +161,14 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
                         ["通顺性", "连贯性", "新颖性", "意境"], result_data["score"]))))
                     buf.write("\n")
                 buf.write("\n")
-                if str(genre) != "5":
+                if str(genre) in {"1", "4", "2", "7"}:
                     buf.writelines((line+"\n" for line in result_data["poem"]))
-                else:
+                elif str(genre) == "5":
                     buf.writelines(
                         (f"{line} --- {src}\n" for line, src in zip(result_data["poem"], result_data["source"])))
+                elif str(genre) == "3":
+                    buf.writelines(
+                        ("\n".join(section)+"\n\n" for section in result_data["poem"]))
                 print(generate_result)
                 if image:
                     with requests.post("http://jiuge.thunlp.cn/share", data={
