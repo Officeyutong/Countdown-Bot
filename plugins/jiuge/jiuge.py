@@ -182,8 +182,8 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
                     }) as urlf:
                         print(urlf.text)
                         image_file = urlf.json()["data"]
-                        buf.write(
-                            f"http://47.52.252.160/pic_share/{image_file}")
+                        # buf.write(
+                        #     f"http://47.52.252.160/pic_share/{image_file}")
                         buf.write(
                             f"[CQ:image,file=http://jiuge.thunlp.cn/share/new/{image_file}]")
 
