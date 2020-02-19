@@ -156,7 +156,7 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
                 buf = StringIO()
                 buf.write(f"{user_id} 生成完成\n")
                 result_data = generate_result["data"]
-                if "scores" in result_data:
+                if "score" in result_data:
                     buf.write(" ".join((f"{x}:{y}" for x, y in zip(
                         ["通顺性", "连贯性", "新颖性", "意境"], result_data["score"]))))
                     buf.write("\n")
