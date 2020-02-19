@@ -24,7 +24,7 @@ HELP_STRING = """
 
 jiuge 参数1:值1 参数2:值2 ....
 
-参数取值为genre yan style keyword,image其中keyword为作诗的关键词,image:{on,off}为是否输出图片
+参数取值为genre(默认为1) yan(默认为5) style(默认为0) keyword(默认为"关键词") image(默认为off) 其中keyword为作诗的关键词,image:{on,off}为是否输出图片
 
 例如以下为部分合法的调用:
 
