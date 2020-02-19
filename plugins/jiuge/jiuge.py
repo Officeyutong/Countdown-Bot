@@ -86,6 +86,9 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
         # locals()[name] = val
     genre, keyword, yan, style, image = args["genre"], args[
         "keyword"], args["yan"], args["style"], args["image"] == "on"
+    if genre not in "142758":
+        bot.send(context, "非法体裁")
+        return
     client = requests.session()
     begin_time = time.time()
     import uuid
