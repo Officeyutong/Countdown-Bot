@@ -71,7 +71,7 @@ def jiuge(bot: CQHttp, context: dict, input_args: List[str]):
     while input_args and not input_args[-1].strip():
         input_args.pop()
 
-    args = {"genre": 1, "keyword": "关键词", "yan": 5, "style": 0, "image": "off"}
+    args = {"genre": "1", "keyword": "关键词", "yan": "5", "style": "0", "image": "off"}
     for item in input_args[1:]:
         item = item.strip()
         try:
