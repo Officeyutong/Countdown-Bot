@@ -79,13 +79,16 @@ def start():
 def stop(args):
     import util
     import global_vars
+    # exit(0)
+    import os
+    import signal
+    
     print_log("Shutting down schedule loops..")
     for x in global_vars.loop_threads:
         util.stop_thread(x)
     print_log("Shutting flask..")
     util.stop_thread(global_vars.VARS["app_thread"])
-    exit(0)
-
+    os.kill(os.getpid(), 1)
 
 @console_command(name="help", help="查看帮助")
 def console_help(args):
