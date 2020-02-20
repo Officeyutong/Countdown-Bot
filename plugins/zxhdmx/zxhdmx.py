@@ -414,7 +414,7 @@ class Game:
             self.limits[player_id] = punish["val"].split("|")
             self.countdowns.append(
                 [
-                    punish["rounds"]+1,
+                    int(punish["rounds"])+1,
                     lambda: self.limits.pop(player_id, None),
                     f"[CQ:at,qq={player_id}] 的题库限制 {punish['val']} 已经解除"
                 ])
