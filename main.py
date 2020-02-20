@@ -168,5 +168,12 @@ def main2():
 
 if __name__ == "__main__":
     # pdb.set_trace()
+    import sys
+    if len(sys.argv) > 1:
+        debug_arg = sys.argv[1]
+        if debug_arg == "debug":
+            main2()
+    else:
+        start()
     # start()
-    main2()
+    # main2()
