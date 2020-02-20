@@ -10,6 +10,7 @@ import random
 import os
 import json
 import flask
+from threading import Lock
 config = global_vars.CONFIG[__name__]
 app: flask.Flask = global_vars.VARS["web_app"]
 commands = None
@@ -157,6 +158,8 @@ class Game:
         self.next_punish: Set[int] = set()
         # 接下来每一局这些玩家要自动加上给定的点数
         self.add_points: Dict[int, int] = dict()
+        self.player_list_lock = Lock()
+        self.base_lock = Lock()
 
         # self.punishes = set()
         # self.send_message("群 {} 的游戏创建成功qwq".format(self.group))
@@ -233,20 +236,26 @@ class Game:
     def join(self, player_id: int):
         """玩家加入游戏"""
         if player_id not in self.players:
+            self.player_list_lock.acquire()
             if self.stage == GameStage.WAITING_TO_START:
                 self.players.add(player_id)
+                print(f"{player_id} joined,{self.players}")
                 self.send_message("[CQ:at,qq={}] 成功加入游戏qwq.\n输入 \"帮助\" 查看帮助\n当前状态:\n".format(
                     player_id)+self.get_status())
             else:
+                print(
+                    f"{player_id} scheduled to join next,{self.join_at_next},{self.players}")
                 self.join_at_next.append(player_id)
                 self.send_message("[CQ:at,qq={}] 你将会在下次游戏开始时自动加入游戏哦qwq".format(
                     player_id))
+            self.player_list_lock.release()
         else:
             self.send_message("[CQ:at,qq={}] 你已经加入游戏了qwq".format(player_id))
 
     def exit(self, player_id: int):
         """玩家退出游戏"""
         if player_id in self.players:
+            self.player_list_lock.acquire()
             if self.stage == GameStage.WAITING_TO_START:
                 self.players.remove(player_id)
                 # del self.limits[player_id]
@@ -258,12 +267,17 @@ class Game:
                     self.adjoint_punish.remove(player_id)
                 if player_id in self.add_points:
                     self.add_points.pop(player_id)
+                print(f"{player_id} exited,{self.players}")
                 self.send_message("[CQ:at,qq={}] 成功退出游戏qwq，当前状态:\n".format(
                     player_id)+self.get_status())
+
             else:
                 self.exit_at_next.append(player_id)
+                print(
+                    f"{player_id} scheduled to join next,{self.exit_at_next},{self.players}")
                 self.send_message("[CQ:at,qq={}] 你将会在游戏结束时自动退出游戏哦qwq".format(
                     player_id))
+            self.player_list_lock.release()
         else:
             self.send_message(
                 "[CQ:at,qq={}] 你不在当前游戏内呢qwq".format(player_id))
@@ -400,10 +414,10 @@ class Game:
             self.limits[player_id] = punish["val"].split("|")
             self.countdowns.append(
                 [
-                    punish["rounds"]+1, 
+                    punish["rounds"]+1,
                     lambda: self.limits.pop(player_id, None),
                     f"[CQ:at,qq={player_id}] 的题库限制 {punish['val']} 已经解除"
-                    ])
+                ])
         elif punish["type"] == "next_punish":
             self.next_punish = self.punish_list.copy()
         elif punish["type"] == "add_points":
@@ -429,8 +443,10 @@ class Game:
         self.send_message("本轮游戏结束.")
         if self.points:
             self.points.clear()
+        # self.player_list_lock.acquire()
         if self.punish_list:
             self.punish_list.clear()
+        # self.player_list_lock.release()
         self.selector = -1
         # 倒计时函数
         for item in self.countdowns:
@@ -528,7 +544,9 @@ def zxh_command(bot: CQHttp, context, message):
         if 3+len(args[1:]) != len(func.__code__.co_varnames):
             bot.send(context, "参数个数不足或过多")
             return
+        # game.base_lock.acquire()
         func(bot, context, games[context["group_id"]], *args[1:])
+        # game.base_lock.release()
 
 
 def load_data():

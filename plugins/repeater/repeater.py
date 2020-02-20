@@ -39,6 +39,7 @@ def repeat_handler(bot: CQHttp, context, message):
         last_message[group] = message
         repeat_time[group] = 1
     if repeat_time[group] >= config.REPEAT_TIME_LIMIT:
+        print(f"Repeating {message}")
         bot.send(context, message)
         repeat_time[group] = 0
         last_message[group] = None

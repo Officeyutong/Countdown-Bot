@@ -92,7 +92,11 @@ class CountdownBot(CQHttp):
         ))
 
         print(
-            f"共加载 {commands_count} 个命令, {len(self.plugins)} 个插件, {listeners_count} 个监听器, {self.state_manager.state_callers} 个状态管理器")
+            f"共加载 {commands_count} 个命令, {len(self.command_manager.console_commands)}个控制台命令, {len(self.plugins)} 个插件, {listeners_count} 个监听器, {self.state_manager.state_callers} 个状态管理器")
+        self.on_message()(self.message_handler)
 
     def start(self):
+        pass
+
+    def message_handler(self, context: dict):
         pass
