@@ -30,6 +30,8 @@ class Plugin:
                  state_manager: StateManager,
                  plugin_base_dir: Path,
                  plugin_id: str,
+                 plugin_meta: PluginMeta,
+                 bot: '.countdown_bot.CountdownBot',  # type: .countdown_bot.CountdownBot
                  config: Optional[ConfigBase]
                  ):
         self.__event_listeners: Set[Tuple[EventBase, EventCallback]] = set()
@@ -39,6 +41,16 @@ class Plugin:
         self.command_manager = command_manager
         self.__plugin_id = plugin_id
         self.state_manager = state_manager
+        self.__plugin_meta = plugin_meta
+        self.__bot = bot # type: .countdown_bot.CountdownBot
+
+    @property
+    def bot(self) -> ".countdown_bot.CountdownBot": # type: .countdown_bot.CountdownBot
+        return self.__bot
+
+    @property
+    def plugin_meta(self) -> PluginMeta:
+        return self.__plugin_meta
 
     @property
     def data_dir(self) -> Path:
@@ -51,13 +63,9 @@ class Plugin:
     @property
     def plugin_id(self) -> str:
         return self.__plugin_id
-
-    def get_config(self):
+    @property
+    def config(self):
         return self.__config
-
-    @abstractclassmethod
-    def get_plugin_meta(self) -> PluginMeta:
-        pass
 
     def register_event_listener(self, event: EventBase, callback: EventCallback) -> NoReturn:
         self.__event_listeners.add((event, callback))

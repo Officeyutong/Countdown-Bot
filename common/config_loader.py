@@ -7,6 +7,9 @@ class ConfigBase:
 
 
 def load_from_file(file: Union[Path, str], clazz) -> ConfigBase:
+    import os
+    if not os.path.exists(file):
+        return clazz()
     with open(file, "rb") as py_file:
         code_obj = compile(py_file.read(), file, "exec")
         config_vars = {}
