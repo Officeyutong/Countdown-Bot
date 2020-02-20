@@ -483,6 +483,9 @@ class Game:
             if arg not in self.players:
                 self.send_message("[CQ:at,qq={}] 指定玩家未参与.".format(player_id))
                 return
+            if player_id not in self.punish_list:
+                self.send_message("[CQ:at,qq={}] 你没有被惩罚.".format(player_id))
+                return
             self.player_items[player_id].remove(item_id)
             self.punish_list.remove(player_id)
             self.punish_list.add(arg)
