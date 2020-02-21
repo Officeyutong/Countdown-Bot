@@ -1,5 +1,7 @@
 from abc import abstractmethod
 from typing import List, Callable, Mapping, Set, TypeVar
+from dataclasses import dataclass
+from enum import Enum
 
 
 class EventBase:
@@ -8,12 +10,280 @@ class EventBase:
 
 
 class MessageEvent(EventBase):
-    def __init__(self, message: str, context: dict):
+    def __init__(self, context: dict):
         super().__init__()
-        self.message = message
         self.context = context
+        self.post_type = context["post_type"]
 
 
+class PrivateMessageSubtype(Enum):
+    friend = "friend"
+    group = "group"
+    discuss = "discuss"
+    other = "other"
+
+
+class GroupMessageSubtype(Enum):
+    normal = "normal"
+    anonymous = "anonymous"
+    notice = "notice"
+
+
+class GroupMemberRole(Enum):
+    owner = "owner"
+    admin = "admin"
+    member = "member"
+
+
+class NoticeType(Enum):
+    group_upload = "group_upload"
+    group_admin = "group_admin"
+    group_increase = "group_increase"
+    group_ban = "group_ban"
+    friend_add = "friend_add"
+    friend = "friend"
+
+
+class GroupAdminChangeType(Enum):
+    set = "set"
+    unset = "unset"
+
+
+class GroupMemberDecreaseType(Enum):
+    leave = "leave"
+    kick = "kick"
+    kick_me = "kick_me"
+
+
+class GroupMemberIncreaseType(Enum):
+    approve = "approve"
+    invite = "invite"
+
+
+class GroupBanType(Enum):
+    ban = "ban"
+    lift_ban = "lift_ban"
+
+
+class RequestType(Enum):
+    friend = "friend"
+    group = "group"
+
+
+class GroupJoinType(Enum):
+    add = "add"
+    invite = "invite"
+
+
+@dataclass
+class SimpleMessageSender:
+    user_id: int
+    nickname: str
+    sex: str
+    age: int
+
+    def __init__(self, val: dict):
+        self.user_id = val.get("user_id", None)
+        self.nickname = val.get("nickname", None)
+        self.sex = val.get("sex", None)
+        self.age = val.get("age", None)
+
+
+@dataclass
+class GroupAnonymousSender:
+    id: int
+    name: str
+    flag: str
+
+    def __init__(self, val: dict):
+        self.id = val.get("id", None)
+        self.name = val.get("name", None)
+        self.flag = val.get("flag", None)
+
+
+@dataclass
+class GroupMessageSender:
+    user_id: int
+    nickname: str
+    card: str
+    sex: str
+    age: int
+    area: str
+    level: str
+    role: GroupMemberRole
+    title: str
+
+    def __init__(self, val: dict):
+        self.user_id = val.get("user_id", None)
+        self.nickname = val.get("nickname", None)
+        self.card = val.get("card", None)
+        self.sex = val.get("sex", None)
+        self.age = val.get("age", None)
+        self.area = val.get("area", None)
+        self.level = val.get("level", None)
+        self.role = GroupMemberRole(
+            val["role"]) if val.get("role", None) else None
+        self.title = val.get("title", None)
+
+
+class PrivateMessageEvent(MessageEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type: PrivateMessageSubtype = PrivateMessageSubtype(
+            context["sub_type"]) if context.get("sub_type", None) else None
+        self.message_id: int = context.get("message_id", None)
+        self.user_id: int = context.get("user_id", None)
+        self.message = context.get("message", None)
+        self.raw_message: str = context.get("raw_message", None)
+        self.font: int = context.get("font", None)
+        self.sender: SimpleMessageSender = SimpleMessageSender(
+            context["sender"]) if context.get("sender", None) else None
+        self.anonymous: GroupAnonymousSender = GroupAnonymousSender(
+            context["anonymous"]) if context.get("anonymous", None) else None
+        self.reply = None
+        self.auto_escape = None
+
+
+class GroupMessageEvent(MessageEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type: GroupMessageSubtype = GroupMessageSubtype(
+            context["sub_type"]) if context.get("sub_type", None) else None
+        self.message_id: int = context.get("message_id", None)
+        self.user_id: int = context.get("user_id", None)
+        self.group_id: int = context.get("group_id", None)
+
+        self.message = context.get("message", None)
+        self.raw_message: str = context.get("raw_message", None)
+        self.font: int = context.get("font", None)
+        self.sender: SimpleMessageSender = SimpleMessageSender(
+            context["sender"]) if context.get("sender", None) else None
+        self.reply: str = None
+        self.auto_escape: bool = None
+        self.at_sender: bool = None
+        self.delete: bool = None
+        self.kick: bool = None
+        self.ban: bool = None
+        self.ban_duration: int = None
+
+
+class DiscussMessageEvent(MessageEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type = "discuss"
+        self.message_id: int = context.get("message_id", None)
+        self.user_id: int = context.get("user_id", None)
+        self.discuss_id: int = context.get("discuss_id", None)
+
+        self.message = context.get("message", None)
+        self.raw_message: str = context.get("raw_message", None)
+        self.font: int = context.get("font", None)
+        self.sender: SimpleMessageSender = SimpleMessageSender(
+            context["sender"]) if context.get("sender", None) else None
+        self.reply: str = None
+        self.auto_escape: bool = None
+        self.at_sender: bool = None
+
+
+class NoticeEvent(EventBase):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.notice_type = NoticeType(context["notice_type"])
+
+
+@dataclass
+class GroupFile:
+    id: str
+    name: str
+    size: str  # bytes
+    busid: str
+
+    def __init__(self, val: dict):
+        self.id = val["id"]
+        self.name = val["name"]
+        self.size = val["size"]
+        self.busid = val["busid"]
+
+
+class GroupFileUploadEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.group_id: int = context["group_id"]
+        self.user_id: int = context["user_id"]
+        self.file = GroupFile(context["file"])
+
+
+class GroupAdminChangeEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type = GroupAdminChangeType(context["sub_type"])
+        self.group_id: int = context["group_id"]
+        self.user_id: int = context["user_id"]
+
+
+class GroupMemberDecreaseEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type = GroupMemberDecreaseType(context["sub_type"])
+        self.group_id: int = context["group_id"]
+        self.user_id: int = context["user_id"]
+        self.operator_id: int = context["operator_id"]
+
+
+class GroupMemberIncreaseEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type = GroupMemberIncreaseType(context["sub_type"])
+        self.group_id: int = context["group_id"]
+        self.user_id: int = context["user_id"]
+        self.operator_id: int = context["operator_id"]
+
+
+class GroupBanEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.sub_type = GroupBanType(context["sub_type"])
+        self.group_id: int = context["group_id"]
+        self.user_id: int = context["user_id"]
+        self.operator_id: int = context["operator_id"]
+        self.duration: int = context["duration"]
+
+
+class FriendAddEvent(NoticeEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.user_id: int = context["user_id"]
+
+
+class RequestEvent(EventBase):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.request_type = RequestType(context["request_type"])
+
+
+class FriendAddRequestEvent(RequestEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.user_id: int = context["user_id"]
+        self.comment: str = context["comment"]
+        self.flag: str = context["flag"]
+        self.approve: bool = None
+        self.remark: str = None
+
+
+class GroupInviteOrAddRequestEvent(RequestEvent):
+    def __init__(self, context: dict):
+        super().__init__(context)
+        self.user_id: int = context["user_id"]
+        self.comment: str = context["comment"]
+        self.flag: str = context["flag"]
+        self.group_id: int = context["group_id"]
+        self.sub_type = GroupJoinType(context["sub_type"])
+        self.approve: bool = None
+        self.reason: str = None
+
+
+    # def set_reply()
 EventCallback = Callable[[EventBase], None]
 
 

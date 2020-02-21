@@ -3,6 +3,7 @@ from common.datatypes import PluginMeta
 from common.config_loader import ConfigBase
 from common.command import Command
 from common.event import Listener, MessageEvent
+from common.loop import TimeTuple
 from typing import List
 
 
@@ -18,6 +19,13 @@ class MyEventListener(Listener):
 class MyPlugin(Plugin):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    async def my_loop(self):
+        self.bot.logger.debug("executing...")
+        # import asyncio
+        # await asyncio.sleep(1)
+        self.bot.logger.debug("Meow~")
+        raise Exception("嘤嘤嘤")
 
     def on_enable(self):
         # self.bot
@@ -41,6 +49,11 @@ class MyPlugin(Plugin):
         ))
         self.register_all_event_listeners(
             MyEventListener(self)
+        )
+        from datetime import datetime
+        self.register_schedule_loop(
+            TimeTuple(datetime.now().hour,
+                      datetime.now().minute+1), self.my_loop()
         )
 
     def simple_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict):

@@ -47,7 +47,7 @@ class CountdownBot(CQHttp):
         self.state_manager = StateManager()
         self.command_manager = CommandManager()
         self.loop_manager = ScheduleLoopManager(
-            self.config.CHECK_INTERVAL, self.config.EXECUTE_DELAY)
+            self.config.CHECK_INTERVAL, self.config.EXECUTE_DELAY, self)
         self.flask_args = flask_args
         self.__logger = logging.Logger(
             "CountdownBot"
@@ -172,13 +172,24 @@ class CountdownBot(CQHttp):
             )
         )
 
+    def __coroutine_exception_handler(self, future: asyncio.Future):
+        exc = future.exception()
+        if exc:
+            raise exc
+
     def start(self):
         self.loop_thread = Thread(
             target=lambda: self.loop.run_forever())
         self.logger.info("Starting schedule loops..")
+        # self.loop.set_exception_handler()
+        # self.loop.set_debug(True)
+        self.loop.set_exception_handler(
+            self.__loop_exception_handler
+        )
         self.loop_thread.start()
         for item in self.loop_manager.tasks:
-            asyncio.run_coroutine_threadsafe(item, self.loop)
+            asyncio.run_coroutine_threadsafe(item, self.loop).add_done_callback(
+                self.__coroutine_exception_handler)
         self.input_thread.start()
         self.run(
             host=self.config.POST_ADDRESS,
@@ -217,7 +228,7 @@ class CountdownBot(CQHttp):
         self.logger.info(f"Submitted async task {coro}")
         asyncio.run_coroutine_threadsafe(
             coro, self.loop
-        )
+        ).add_done_callback(self.__coroutine_exception_handler)
 
     def __console_stop_command(self, plugin, args: List[str], raw_string: str, context):
         self.stop()

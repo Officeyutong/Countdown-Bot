@@ -121,7 +121,7 @@ def handle_message(context):
                 if context["group_id"] not in last:
                     last[context["group_id"]] = 0
                 if (time.time()-last[context["group_id"]])*1000 < config.COMMAND_COOLDOWN:
-                    bot.send(context, "指令冷却中.")
+                    bot.send(context, "指令冷却中,请稍后尝试执行.")
                     return
                 else:
                     last[context["group_id"]] = time.time()
