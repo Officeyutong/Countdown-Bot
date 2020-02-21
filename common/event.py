@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Callable, Mapping, Set
+from typing import List, Callable, Mapping, Set, TypeVar
 
 
 class EventBase:
@@ -9,11 +9,9 @@ class EventBase:
 
 class MessageEvent(EventBase):
     def __init__(self, message: str, context: dict):
-        super.__init__(self)
+        super().__init__()
         self.message = message
         self.context = context
-
-
 
 
 EventCallback = Callable[[EventBase], None]
@@ -29,12 +27,12 @@ class EventManager:
         self.events: Mapping[EventBase, Set[EventCallback]] = {}
 
     def process_event(self, event: EventBase):
-        for func in self.events.get(event, []):
+        for func in self.events.get(event.__class__, []):
             func(event)
             if event.cancelled:
                 break
 
-    def register_event(self, event: EventBase, callback: EventCallback):
+    def register_event(self, event, callback: EventCallback):
         if callback in self.events.get(event, []):
             raise ValueError(f"事件 {event} 的处理函数 {callback} 已经注册")
         if event not in self.events:

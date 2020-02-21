@@ -164,6 +164,7 @@ def main2():
 
     bot = CountdownBot(Path(__file__).parent)
     bot.init()
+    bot.start()
 
 
 if __name__ == "__main__":

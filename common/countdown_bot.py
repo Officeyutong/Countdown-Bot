@@ -1,15 +1,23 @@
 from cqhttp import CQHttp
 from pathlib import Path
 from .plugin import Plugin
-from .event import EventManager
-from .command import CommandManager
+from .event import EventManager, MessageEvent
+from .command import CommandManager, Command
 from .state import StateManager
 from .config_loader import ConfigBase, load_from_file
 from typing import List
 from .datatypes import PluginMeta
+from .loop import ScheduleLoopManager
+from .utils import stop_thread
+from threading import Thread
 import sys
 import os
 import importlib
+import asyncio
+import signal
+import logging
+import datetime
+import sys
 
 
 class CountdownBotConfig(ConfigBase):
@@ -24,10 +32,11 @@ class CountdownBotConfig(ConfigBase):
     COMMAND_COOLDOWN = 0
     DEBUG = False
     SERVER_URL = "http://ecs.zhehao.top"
+    LOGGING_LEVEL = logging.INFO
 
 
 class CountdownBot(CQHttp):
-    def __init__(self, app_root: Path):
+    def __init__(self, app_root: Path, **flask_args):
         self.app_root = app_root
         self.__config = load_from_file(
             self.app_root/"config.py", CountdownBotConfig)
@@ -37,29 +46,44 @@ class CountdownBot(CQHttp):
         self.event_manager = EventManager()
         self.state_manager = StateManager()
         self.command_manager = CommandManager()
+        self.loop_manager = ScheduleLoopManager(
+            self.config.CHECK_INTERVAL, self.config.EXECUTE_DELAY)
+        self.flask_args = flask_args
+        self.__logger = logging.Logger(
+            "CountdownBot"
+        )
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self.__logger
 
     @property
     def config(self) -> CountdownBotConfig:
         return self.__config
 
-    def init(self):
+    def __load_plugins(self):
         # 加载插件
         sys.path.append(str(os.path.abspath(self.app_root/"plugins")))
-        print("加载插件中")
+        self.logger.info("Loading plugins..")
         for plugin_dir in os.listdir(self.app_root/"plugins"):
             plugin_id = plugin_dir
             current_plugin = self.app_root/"plugins"/plugin_dir
             if not os.path.isdir(current_plugin):
-                # print(f"{current_plugin} 不是目录,已忽略")
+                self.logger.debug(f"Ignored {current_plugin}: not a directory")
                 continue
             if not os.path.exists(current_plugin/"plugin.py"):
                 # print(f"{current_plugin} 不存在plugin.py,已忽略")
+                self.logger.debug(
+                    f"Ignored {current_plugin}: doesn't has a 'plugin.py'")
+
                 continue
             plugin_module = importlib.import_module(f"{plugin_id}.plugin")
             if not hasattr(plugin_module, "get_plugin_class"):
                 # print(f"{plugin_id} 不存在get_plugin_class")
+                self.logger.debug(
+                    f"Ignored {current_plugin}: doesn't has 'get_plugin_class()'")
                 continue
-            print(f"加载插件 {plugin_id}")
+            self.logger.info(f"Loaded plugin: {plugin_id}")
             plugin_class = plugin_module.get_plugin_class()
             plugin_config_class = plugin_module.get_config_class() if hasattr(
                 plugin_module, "get_config_class") else None
@@ -74,16 +98,52 @@ class CountdownBot(CQHttp):
                 event_manager=self.event_manager,
                 command_manager=self.command_manager,
                 state_manager=self.state_manager,
+                schedule_loop_manager=self.loop_manager,
                 plugin_base_dir=current_plugin,
                 plugin_id=plugin_id,
                 plugin_meta=plugin_meta,
                 config=plugin_config,
                 bot=self
             )
-            print(f"启用插件 {plugin_id} 中")
-            plugin.on_load()
+            self.logger.info(f"Enabling {plugin_id} ")
+            plugin.on_enable()
             self.plugins.append(plugin)
-            print(f"插件 {plugin_id} 加载完成")
+            self.logger.info(f"Loaded {plugin_id} successfully")
+
+    def __init_logger(self):
+        log_path = self.app_root/"logs" / (datetime.datetime.strftime(
+            datetime.datetime.now(), "%Y-%m-%d"))
+        if not os.path.exists(log_path) or not os.path.isdir(log_path):
+            os.makedirs(log_path)
+        # Logger
+        formatter = logging.Formatter(
+            '[%(name)s][%(levelname)s][%(asctime)s]: %(message)s')
+        log_file = log_path / \
+            (datetime.datetime.strftime(
+                datetime.datetime.now(), "%Y-%m-%d %H-%M-%S")+".log")
+        # if not os.path.exists(log_file):
+        # os.tou
+        file_handler = logging.FileHandler(
+            log_file,
+            encoding="utf-8"
+        )
+        stdout_handler = logging.StreamHandler(sys.__stdout__)
+        file_handler.setFormatter(formatter)
+        stdout_handler.setFormatter(formatter)
+        # 输出到日志
+        self.logger.addHandler(
+            file_handler
+        )
+        self.logger.addHandler(
+            stdout_handler
+        )
+        # self.logger.addFilter()
+
+    def init(self):
+        self.__init_logger()
+        self.logger.info("Starting Countdown-Bot 2")
+        self.__load_plugins()
+
         commands_count = sum((
             len(x) for x in self.command_manager.commands.values()
         ))
@@ -91,12 +151,82 @@ class CountdownBot(CQHttp):
             len(x) for x in self.event_manager.events.values()
         ))
 
-        print(
-            f"共加载 {commands_count} 个命令, {len(self.command_manager.console_commands)}个控制台命令, {len(self.plugins)} 个插件, {listeners_count} 个监听器, {self.state_manager.state_callers} 个状态管理器")
+        self.logger.info(
+            f"{commands_count} group commands, {len(self.command_manager.console_commands)} console commands, {len(self.plugins)} plugins, {listeners_count} listeners, {len(self.state_manager.state_callers)} states")
         self.on_message()(self.message_handler)
+        self.loop = asyncio.get_event_loop()
+        self.input_thread = Thread(target=self.input_handler)
+        self.command_manager.register_command(
+            Command(
+                "<base>", "stop", self.__console_stop_command, None, "关闭Bot", is_console=True
+            )
+        )
+        self.command_manager.register_command(
+            Command(
+                "<base>", "help", self.__console_help_command, None, "查看帮助", is_console=True
+            )
+        )
+        self.command_manager.register_command(
+            Command(
+                "<base>", "post", self.__console_post_message_event, None, "模拟消息事件 | post <消息内容>", is_console=True
+            )
+        )
 
     def start(self):
-        pass
+        self.loop_thread = Thread(
+            target=lambda: self.loop.run_forever())
+        self.logger.info("Starting schedule loops..")
+        self.loop_thread.start()
+        for item in self.loop_manager.tasks:
+            asyncio.run_coroutine_threadsafe(item, self.loop)
+        self.input_thread.start()
+        self.run(
+            host=self.config.POST_ADDRESS,
+            port=self.config.POST_PORT,
+            **self.flask_args
+        )
+
+    def input_handler(self):
+        while True:
+            try:
+                string = input(">").strip()
+            except (KeyboardInterrupt, EOFError):
+                self.stop()
+            except Exception as ex:
+                import traceback
+                traceback.print_exc(ex)
+            splited = string.split(" ")
+            command_name, args = splited[0], splited[1:]
+            if command_name not in self.command_manager.console_commands:
+                self.logger.info(f"Unknown command: {command_name}")
+                continue
+            self.command_manager.console_commands[command_name].invoke(
+                args, string, None
+            )
 
     def message_handler(self, context: dict):
-        pass
+        self.logger.debug(context)
+
+    def stop(self):
+        self.logger.info("Shutting down..")
+        self.loop.call_soon_threadsafe(self.loop.stop)
+        stop_thread(self.input_thread)
+        os.kill(os.getpid(), 1)
+
+    def submit_async_task(self, coro):
+        self.logger.info(f"Submitted async task {coro}")
+        asyncio.run_coroutine_threadsafe(
+            coro, self.loop
+        )
+
+    def __console_stop_command(self, plugin, args: List[str], raw_string: str, context):
+        self.stop()
+
+    def __console_help_command(self, plugin, args: List[str], raw_string: str, context):
+        for k, v in sorted(self.command_manager.console_commands.items(), key=lambda x: x[0]):
+            self.logger.info(f"{k} --- {v.help_string}")
+
+    def __console_post_message_event(self, plugin, args: List[str], raw_string, context):
+        self.event_manager.process_event(
+            MessageEvent(args[0], {})
+        )

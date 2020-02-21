@@ -1,5 +1,5 @@
 from typing import Dict, Set, Callable, List, Iterable, Optional, Any
-
+# (插件,参数列表,原始字符串,上下文)
 CommandHandler = Callable[[Any, List[str], str, dict], None]
 
 
@@ -16,7 +16,7 @@ class Command:
         self.plugin_id = plugin_id
         self.command_name = command_name
         self.handler = handler
-        self.alias = list(alias)
+        self.alias = list(alias or [])
         self.help_string = help_string
         self.plugin = plugin
         self.is_console = is_console

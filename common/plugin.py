@@ -5,8 +5,10 @@ from typing import Callable, Set, Tuple, NoReturn, Type, Optional, Iterable
 from .datatypes import PluginMeta
 from .config_loader import ConfigBase
 from .state import StateManager, StateHandler
+from .loop import ScheduleLoopManager, TimeTuple
 from abc import abstractclassmethod
 from pathlib import Path
+import logging
 
 
 def dataclass_wrapper(func):
@@ -28,6 +30,7 @@ class Plugin:
                  event_manager: EventManager,
                  command_manager: CommandManager,
                  state_manager: StateManager,
+                 schedule_loop_manager: ScheduleLoopManager,
                  plugin_base_dir: Path,
                  plugin_id: str,
                  plugin_meta: PluginMeta,
@@ -42,10 +45,11 @@ class Plugin:
         self.__plugin_id = plugin_id
         self.state_manager = state_manager
         self.__plugin_meta = plugin_meta
-        self.__bot = bot # type: .countdown_bot.CountdownBot
+        self.__bot = bot  # type: .countdown_bot.CountdownBot
+        self.schedule_loop_manager = schedule_loop_manager
 
     @property
-    def bot(self) -> ".countdown_bot.CountdownBot": # type: .countdown_bot.CountdownBot
+    def bot(self) -> ".countdown_bot.CountdownBot":  # type: .countdown_bot.CountdownBot
         return self.__bot
 
     @property
@@ -63,9 +67,17 @@ class Plugin:
     @property
     def plugin_id(self) -> str:
         return self.__plugin_id
+
     @property
     def config(self):
         return self.__config
+
+    @property
+    def logger(self) -> logging.Logger:
+        return self.bot.logger
+
+    def register_schedule_loop(self, time: TimeTuple, coro, name: str = ""):
+        self.schedule_loop_manager.register(time, coro, name)
 
     def register_event_listener(self, event: EventBase, callback: EventCallback) -> NoReturn:
         self.__event_listeners.add((event, callback))
@@ -83,6 +95,8 @@ class Plugin:
                 if len(annotations) == 1:
                     event_type = list(annotations.values())[0]
                     if issubclass(event_type, EventBase):
+                        self.logger.debug(
+                            f"Registering event listener {event_type} : {item}")
                         self.register_event_listener(event_type, item)
 
     def wrap_command(self, command_name: str, command_handler: CommandHandler, help_string: str, alias: Optional[Iterable[str]] = None) -> Command:
@@ -96,7 +110,7 @@ class Plugin:
     def register_state_handler(self, state_handler: StateHandler) -> NoReturn:
         self.state_manager.register_state_caller(state_handler)
 
-    def on_load(self) -> NoReturn:
+    def on_enable(self) -> NoReturn:
         pass
 
     def on_disable(self) -> NoReturn:
