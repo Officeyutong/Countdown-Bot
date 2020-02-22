@@ -55,7 +55,7 @@ class CountdownBot(CQHttp):
             "CountdownBot"
         )
         self.last_command_execute: DefaultDict[str, float] = DefaultDict(
-            default_factory=lambda: 0)  # 群号->执行时间
+            default_factory=lambda: 0)  # 冷却标识符->执行时间
 
     @property
     def logger(self) -> logging.Logger:
@@ -245,6 +245,7 @@ class CountdownBot(CQHttp):
         sys.stdout
 
     def init(self):
+        print("init..")
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
         self.__load_plugins()
