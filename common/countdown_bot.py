@@ -190,10 +190,10 @@ class CountdownBot(CQHttp):
             self.logger.info(f"Loaded plugin: {plugin_id}")
             plugin_class = plugin_module.get_plugin_class()
             plugin_config_class = plugin_module.get_config_class() if hasattr(
-                plugin_module, "get_config_class") else None
+                plugin_module, "get_config_class") else ConfigBase
             plugin_meta: PluginMeta = plugin_module.get_plugin_meta() if hasattr(
                 plugin_module, "get_plugin_meta") else PluginMeta("unknown", 1.0, "")
-            plugin_config = ConfigBase()
+            plugin_config = plugin_config_class()
             if plugin_config_class:
                 if os.path.exists(current_plugin/"config.py"):
                     plugin_config = load_from_file(
