@@ -106,14 +106,14 @@ class MyPlugin(Plugin):
         self.logger.info(self.config.TEST_URL)
         self.logger.debug(self.simple_console_command)
         self.sessions: Dict[SessionTuple, Any] = dict()
-        self.register_command_wrapped(
-            command_name="qwq",
-            command_handler=self.simple_console_command,
-            help_string="Meow~",
-            chats=None,
-            alias=None,
-            is_console=True
-        )
+        # self.register_command_wrapped(
+        #     command_name="qwq",
+        #     command_handler=self.simple_console_command,
+        #     help_string="Meow~",
+        #     chats=None,
+        #     alias=None,
+        #     is_console=True
+        # )
         self.register_command_wrapped(
             command_name="qwq",
             command_handler=self.simple_command,
@@ -146,7 +146,7 @@ class MyPlugin(Plugin):
             time.sleep(5)
             print("Raising...")
             raise Exception("qwq")
-        self.bot.submit_multithread_task(test)
+        # self.bot.submit_multithread_task(test)
         self.register_event_listener(
             GroupMessageEvent, self.evt_handler
         )
