@@ -2,7 +2,7 @@ from common.plugin import Plugin
 from common.datatypes import PluginMeta
 from common.config_loader import ConfigBase
 from common.command import Command
-from common.event import Listener, MessageEvent
+from common.event import *
 from common.loop import TimeTuple
 from typing import List
 
@@ -11,9 +11,43 @@ class MyEventListener(Listener):
     def __init__(self, plugin):
         self.plugin = plugin
 
-    def message(self, evt: MessageEvent):
-        self.plugin.logger.info(evt.message)
-        self.plugin.logger.info(evt)
+    # def message(self, evt: MessageEvent):
+    #     self.plugin.logger.info(evt.message)
+    #     self.plugin.logger.info(evt)
+    def group_message(self, evt: GroupMessageEvent):
+        self.plugin.bot.logger.debug(evt.message)
+        self.plugin.bot.logger.debug(evt.sender.user_id)
+        evt.at_sender = True
+        evt.reply = f"嘤嘤嘤 {evt.message}"
+        print(evt)
+
+    def private_message(self, evt: PrivateMessageEvent):
+        self.plugin.bot.logger.debug(evt.message)
+        self.plugin.bot.logger.debug(evt.sender.user_id)
+        evt.reply = evt.message
+
+    def fileup(self, evt: GroupFileUploadEvent):
+        self.plugin.bot.logger.debug(evt)
+
+    def admin_change(self, evt: GroupAdminChangeEvent):
+        self.plugin.bot.logger.debug(evt)
+
+    def member_decrease(self, evt: GroupMemberDecreaseEvent):
+        self.plugin.bot.logger.debug(evt)
+
+    def member_increase(self, evt: GroupMemberIncreaseEvent):
+        self.plugin.bot.logger.debug(evt)
+
+    def group_ban(self, evt: GroupBanEvent):
+        self.plugin.bot.logger.debug(evt)
+
+    def request_friend(self, evt: FriendAddRequestEvent):
+        self.plugin.bot.logger.debug(evt)
+        evt.approve = True
+
+    def request_group(self, evt: GroupInviteOrAddRequestEvent):
+        self.plugin.bot.logger.debug(evt)
+        evt.approve = False
 
 
 class MyPlugin(Plugin):
@@ -25,7 +59,7 @@ class MyPlugin(Plugin):
         # import asyncio
         # await asyncio.sleep(1)
         self.bot.logger.debug("Meow~")
-        raise Exception("嘤嘤嘤")
+        # raise Exception("嘤嘤嘤")
 
     def on_enable(self):
         # self.bot

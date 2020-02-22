@@ -1,14 +1,15 @@
 from cqhttp import CQHttp
 from pathlib import Path
-from .plugin import Plugin
-from .event import EventManager, MessageEvent
-from .command import CommandManager, Command
-from .state import StateManager
-from .config_loader import ConfigBase, load_from_file
-from typing import List
-from .datatypes import PluginMeta
-from .loop import ScheduleLoopManager
-from .utils import stop_thread
+from common.plugin import Plugin
+from common.event import EventManager, MessageEvent
+import common.event as event
+from common.command import CommandManager, Command
+from common.state import StateManager
+from common.config_loader import ConfigBase, load_from_file
+from typing import List, Iterable, Callable
+from common.datatypes import PluginMeta
+from common.loop import ScheduleLoopManager
+from common.utils import stop_thread
 from threading import Thread
 import sys
 import os
@@ -43,7 +44,7 @@ class CountdownBot(CQHttp):
         super().__init__(self.config.API_URL,
                          self.config.ACCESS_TOKEN, self.config.SECRET)
         self.plugins: List[Plugin] = []
-        self.event_manager = EventManager()
+        self.event_manager = EventManager(self)
         self.state_manager = StateManager()
         self.command_manager = CommandManager()
         self.loop_manager = ScheduleLoopManager(
@@ -60,6 +61,30 @@ class CountdownBot(CQHttp):
     @property
     def config(self) -> CountdownBotConfig:
         return self.__config
+
+    def __init_events(self):
+        self.on_message("private")(self.__make_event_handler(
+            event.PrivateMessageEvent, ["reply", "auto_escape"]))
+        self.on_message("group")(self.__make_event_handler(event.GroupMessageEvent, [
+            "reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]))
+        self.on_message("discuss")(self.__make_event_handler(
+            event.DiscussMessageEvent, ["reply", "auto_escape", "at_sender"]))
+        self.on_notice("group_upload")(self.__make_event_handler(
+            event.GroupFileUploadEvent, []))
+        self.on_notice("group_admin")(self.__make_event_handler(
+            event.GroupAdminChangeEvent, []))
+        self.on_notice("group_decrease")(self.__make_event_handler(
+            event.GroupMemberDecreaseEvent, []))
+        self.on_notice("group_increase")(self.__make_event_handler(
+            event.GroupMemberIncreaseEvent, []))
+        self.on_notice("group_ban")(self.__make_event_handler(
+            event.GroupBanEvent, []))
+        self.on_notice("friend_add")(self.__make_event_handler(
+            event.FriendAddEvent, []))
+        self.on_request("friend")(self.__make_event_handler(
+            event.FriendAddRequestEvent, ["approve", "remark"]))
+        self.on_request("group")(self.__make_event_handler(
+            event.GroupInviteOrAddRequestEvent, ["approve", "reason"]))
 
     def __load_plugins(self):
         # 加载插件
@@ -143,7 +168,7 @@ class CountdownBot(CQHttp):
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
         self.__load_plugins()
-
+        self.__init_events()
         commands_count = sum((
             len(x) for x in self.command_manager.commands.values()
         ))
@@ -239,5 +264,20 @@ class CountdownBot(CQHttp):
 
     def __console_post_message_event(self, plugin, args: List[str], raw_string, context):
         self.event_manager.process_event(
-            MessageEvent(args[0], {})
+            MessageEvent({"message": args[0]})
         )
+
+    def __fill_dict(self, dic: dict, evt, val):
+        if getattr(evt, val) is not None:
+            dic[val] = getattr(evt, val)
+
+    def __make_event_handler(self, event_class, reply_keys: Iterable[str]) -> Callable[[dict], dict]:
+        def wrapper(context: dict) -> dict:
+            evt = event_class(context)
+            self.logger.debug(f"Base event received...{context['post_type']}")
+            self.event_manager.process_event(evt)
+            result = {}
+            for key in reply_keys:
+                self.__fill_dict(result, evt, key)
+            return result
+        return wrapper

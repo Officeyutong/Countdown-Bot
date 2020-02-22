@@ -8,6 +8,9 @@ class EventBase:
     def __init__(self):
         self.cancelled = False
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 
 class MessageEvent(EventBase):
     def __init__(self, context: dict):
@@ -39,6 +42,7 @@ class NoticeType(Enum):
     group_upload = "group_upload"
     group_admin = "group_admin"
     group_increase = "group_increase"
+    group_decrease = "group_decrease"
     group_ban = "group_ban"
     friend_add = "friend_add"
     friend = "friend"
@@ -187,7 +191,7 @@ class DiscussMessageEvent(MessageEvent):
 
 class NoticeEvent(EventBase):
     def __init__(self, context: dict):
-        super().__init__(context)
+        super().__init__()
         self.notice_type = NoticeType(context["notice_type"])
 
 
@@ -257,7 +261,7 @@ class FriendAddEvent(NoticeEvent):
 
 class RequestEvent(EventBase):
     def __init__(self, context: dict):
-        super().__init__(context)
+        super().__init__()
         self.request_type = RequestType(context["request_type"])
 
 
@@ -293,14 +297,20 @@ class Listener:
 
 class EventManager:
 
-    def __init__(self):
+    def __init__(self, bot):
         self.events: Mapping[EventBase, Set[EventCallback]] = {}
+        self.bot = bot
 
     def process_event(self, event: EventBase):
-        for func in self.events.get(event.__class__, []):
-            func(event)
-            if event.cancelled:
-                break
+        self.bot.logger.debug(f"Processing event type = {type(event)}")
+        for event_type, listeners in self.events.items():
+            if issubclass(type(event), event_type):
+                self.bot.logger.debug(
+                    f"Processing event {event.__class__} for listener type: {event_type}")
+                for func in listeners:
+                    func(event)
+                    if event.cancelled:
+                        break
 
     def register_event(self, event, callback: EventCallback):
         if callback in self.events.get(event, []):
