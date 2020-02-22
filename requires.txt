@@ -20,3 +20,4 @@ pydub
 sox
 redis
 jieba
+aiohttp
