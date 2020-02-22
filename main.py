@@ -14,8 +14,12 @@ import flask
 import os
 import importlib
 import global_vars
+import common.event as event
 # import PyV8
-bot = CQHttp(api_root=config.API_URL, access_token=config.ACCESS_TOKEN)
+from common.countdown_bot import CountdownBot
+import pathlib
+bot = CountdownBot(pathlib.Path("."))
+# bot = CQHttp(api_root=config.API_URL, access_token=config.ACCESS_TOKEN)
 log = bot.logger
 
 
@@ -64,40 +68,52 @@ def start():
     print_log("Registered schedule loops:\n{}".format(loop_threads))
     for x in loop_threads:
         x.start()
+
+    bot.init()
+    bot.event_manager.register_event(
+        event.GroupMessageEvent,
+        lambda evt: handle_message(evt.context)
+    )
+    bot.event_manager.register_event(
+        event.GroupInviteOrAddRequestEvent,
+        lambda evt: handle_group_invite(evt.context)
+    )
+    bot.start()
+    os.kill(os.getpid(), 1)
     # 启动CQ Bot
-    print_log("Starting CQHttp...")
-    app_thread = threading.Thread(target=lambda: bot.run(
-        host=config.POST_ADDRESS, port=config.POST_PORT))
-    app_thread.start()
+    # print_log("Starting CQHttp...")
+    # app_thread = threading.Thread(target=lambda: bot.run(
+    # host=config.POST_ADDRESS, port=config.POST_PORT))
+    # app_thread.start()
     # bot.run(
     #     host=config.POST_ADDRESS, port=config.POST_PORT, debug=True)
-    global_vars.VARS["app_thread"] = app_thread
-    input_loop()
+    # global_vars.VARS["app_thread"] = app_thread
+    # input_loop()
 
 
-@console_command(name="stop", help="关闭Bot")
-def stop(args):
-    import util
-    import global_vars
-    # exit(0)
-    import os
-    import signal
+# @console_command(name="stop", help="关闭Bot")
+# def stop(args):
+#     import util
+#     import global_vars
+#     # exit(0)
+#     import os
+#     import signal
 
-    print_log("Shutting down schedule loops..")
-    for x in global_vars.loop_threads:
-        util.stop_thread(x)
-    print_log("Shutting flask..")
-    util.stop_thread(global_vars.VARS["app_thread"])
-    os.kill(os.getpid(), 1)
-
-
-@console_command(name="help", help="查看帮助")
-def console_help(args):
-    for k, v in console_commands.items():
-        print_log("%s %s" % (k, v[0]))
+#     print_log("Shutting down schedule loops..")
+#     for x in global_vars.loop_threads:
+#         util.stop_thread(x)
+#     print_log("Shutting flask..")
+#     util.stop_thread(global_vars.VARS["app_thread"])
+#     os.kill(os.getpid(), 1)
 
 
-@bot.on_message()
+# @console_command(name="help", help="查看帮助")
+# def console_help(args):
+#     for k, v in console_commands.items():
+#         print_log("%s %s" % (k, v[0]))
+
+
+# @bot.on_message()
 def handle_message(context):
     print_log("Handling message:{}".format(context))
     if "group_id" in context:
@@ -135,7 +151,7 @@ def handle_message(context):
                 listener.__call__(bot, context, text)
 
 
-@bot.on_request("group", "friend")
+# @bot.on_request("group", "friend")
 def handle_group_invite(context):
     print(context)
     # 不处理加群请求
@@ -145,17 +161,17 @@ def handle_group_invite(context):
     return {"approve": True}
 
 
-def input_loop():
-    while True:
-        args = (input(">")+" ").split(" ")
-        if args[0] in console_commands:
-            try:
-                console_commands[args[0]][1](args)
-            except Exception as ex:
-                print_log(ex)
-                # raise ex
-        else:
-            print("Unknown command: {}".format(args))
+# def input_loop():
+#     while True:
+#         args = (input(">")+" ").split(" ")
+#         if args[0] in console_commands:
+#             try:
+#                 console_commands[args[0]][1](args)
+#             except Exception as ex:
+#                 print_log(ex)
+#                 # raise ex
+#         else:
+#             print("Unknown command: {}".format(args))
 
 
 def main2():

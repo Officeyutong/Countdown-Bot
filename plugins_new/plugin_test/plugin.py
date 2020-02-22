@@ -17,14 +17,14 @@ class MyEventListener(Listener):
     def group_message(self, evt: GroupMessageEvent):
         self.plugin.bot.logger.debug(evt.message)
         self.plugin.bot.logger.debug(evt.sender.user_id)
-        evt.at_sender = True
-        evt.reply = f"嘤嘤嘤 {evt.message}"
+        # evt.at_sender = True
+        # evt.reply = f"嘤嘤嘤 {evt.message}"
         print(evt)
 
     def private_message(self, evt: PrivateMessageEvent):
         self.plugin.bot.logger.debug(evt.message)
         self.plugin.bot.logger.debug(evt.sender.user_id)
-        evt.reply = evt.message
+        # evt.reply = evt.message
 
     def fileup(self, evt: GroupFileUploadEvent):
         self.plugin.bot.logger.debug(evt)
@@ -43,11 +43,11 @@ class MyEventListener(Listener):
 
     def request_friend(self, evt: FriendAddRequestEvent):
         self.plugin.bot.logger.debug(evt)
-        evt.approve = True
+        # evt.approve = True
 
     def request_group(self, evt: GroupInviteOrAddRequestEvent):
         self.plugin.bot.logger.debug(evt)
-        evt.approve = False
+        # evt.approve = False
 
 
 class MyPlugin(Plugin):

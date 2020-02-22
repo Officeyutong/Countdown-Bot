@@ -54,50 +54,50 @@ def plugins(bot: CQHttp, context, args):
         map(lambda obj: make_msg(obj), global_vars.loaded_plugins.items())))
 
 
-@console_command(name="reload", help="重新加载配置文件")
-def reload_config(args):
-    import importlib
-    global global_config
-    global_config = importlib.reload(global_config)
-    for item in dir(global_config):
-        if item.startswith("__"):
-            continue
-        print("%s = %s" % (item, getattr(global_config, item)))
+# @console_command(name="reload", help="重新加载配置文件")
+# def reload_config(args):
+#     import importlib
+#     global global_config
+#     global_config = importlib.reload(global_config)
+#     for item in dir(global_config):
+#         if item.startswith("__"):
+#             continue
+#         print("%s = %s" % (item, getattr(global_config, item)))
 
 
-@console_command(name="broadcast", help="在所有此Bot所在的群里广播消息")
-def broadcast_message(args):
-    from io import StringIO
-    buf = StringIO()
-    for text in args[1:]:
-        buf.write(text)
-        buf.write(" ")
-    bot: CQHttp = global_vars.VARS["bot"]
-    message = buf.getvalue().strip()
-    print("Message = ", f"'{message}'")
-    for group in bot.get_group_list():
-        group_id = group["group_id"]
-        print("Sending..", group_id)
-        bot.send_message(message_type="group",
-                         group_id=group_id, message=message)
+# @console_command(name="broadcast", help="在所有此Bot所在的群里广播消息")
+# def broadcast_message(args):
+#     from io import StringIO
+#     buf = StringIO()
+#     for text in args[1:]:
+#         buf.write(text)
+#         buf.write(" ")
+#     bot: CQHttp = global_vars.VARS["bot"]
+#     message = buf.getvalue().strip()
+#     print("Message = ", f"'{message}'")
+#     for group in bot.get_group_list():
+#         group_id = group["group_id"]
+#         print("Sending..", group_id)
+#         bot.send_message(message_type="group",
+#                          group_id=group_id, message=message)
 
 
-@command(name="about", help="关于")
-def about(bot: CQHttp, context=None, args=None):
-    bot.send(context, "https://gitee.com/yutong_java/Countdown-Bot")
-    bot.send(context, "by MikuNotFoundException")
+# @command(name="about", help="关于")
+# def about(bot: CQHttp, context=None, args=None):
+#     bot.send(context, "https://gitee.com/yutong_java/Countdown-Bot")
+#     bot.send(context, "by MikuNotFoundException")
 
 
-@command(name="阿克", help="阿克")
-def ak(bot: CQHttp, context=None, args=None):
-    bot.send(context, "您阿克了！")
+# @command(name="阿克", help="阿克")
+# def ak(bot: CQHttp, context=None, args=None):
+#     bot.send(context, "您阿克了！")
 
 
-@command(name="爆零", help="qwq")
-def zero(bot: CQHttp, context=None, args=None):
-    bot.send(context, "您不会爆零的qwq")
+# @command(name="爆零", help="qwq")
+# def zero(bot: CQHttp, context=None, args=None):
+#     bot.send(context, "您不会爆零的qwq")
 
 
-@command(name="凉了", help="凉了?")
-def im_cold(bot: CQHttp, context=None, args=None):
-    bot.send(context, "qwq您不会凉的~")
+# @command(name="凉了", help="凉了?")
+# def im_cold(bot: CQHttp, context=None, args=None):
+#     bot.send(context, "qwq您不会凉的~")

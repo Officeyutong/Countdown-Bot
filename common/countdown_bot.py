@@ -103,7 +103,7 @@ class CountdownBot(CQHttp):
         evt = event.GroupMessageEvent(context)
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"group:{evt.group_id}", current_chat_type=ChatType.group
-        ):
+        ) or True:  # TODO: 开发完成后改成False
             self.event_manager.process_event(evt)
             result = {}
             for key in ["reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]:

@@ -23,6 +23,7 @@ class MessageEvent(EventBase):
         self.raw_message: str = context.get("raw_message", None)
         self.font: int = context.get("font", None)
 
+
 class PrivateMessageSubtype(Enum):
     friend = "friend"
     group = "group"
@@ -274,7 +275,6 @@ class GroupInviteOrAddRequestEvent(RequestEvent):
         self.approve: bool = None
         self.reason: str = None
 
-
     # def set_reply()
 EventCallback = Callable[[EventBase], None]
 
@@ -298,11 +298,14 @@ class EventManager:
                 for func in listeners:
                     func(event)
                     if event.cancelled:
+                        self.bot.logger.debug(f"Event {event} cancelled")
                         break
 
     def register_event(self, event, callback: EventCallback):
         if callback in self.events.get(event, []):
             raise ValueError(f"事件 {event} 的处理函数 {callback} 已经注册")
+        self.bot.logger.debug(
+            f"Registering event {event} with callback {callback}")
         if event not in self.events:
             self.events[event] = {callback}
         else:
