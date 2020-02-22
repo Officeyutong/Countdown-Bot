@@ -3,10 +3,10 @@ from pathlib import Path
 from common.plugin import Plugin
 from common.event import EventManager, MessageEvent
 import common.event as event
-from common.command import CommandManager, Command
+from common.command import CommandManager, Command, ChatType
 from common.state import StateManager
 from common.config_loader import ConfigBase, load_from_file
-from typing import List, Iterable, Callable
+from typing import List, Iterable, Callable, DefaultDict
 from common.datatypes import PluginMeta
 from common.loop import ScheduleLoopManager
 from common.utils import stop_thread
@@ -19,6 +19,7 @@ import signal
 import logging
 import datetime
 import sys
+import io
 
 
 class CountdownBotConfig(ConfigBase):
@@ -46,13 +47,15 @@ class CountdownBot(CQHttp):
         self.plugins: List[Plugin] = []
         self.event_manager = EventManager(self)
         self.state_manager = StateManager()
-        self.command_manager = CommandManager()
+        self.command_manager = CommandManager(self)
         self.loop_manager = ScheduleLoopManager(
             self.config.CHECK_INTERVAL, self.config.EXECUTE_DELAY, self)
         self.flask_args = flask_args
         self.__logger = logging.Logger(
             "CountdownBot"
         )
+        self.last_command_execute: DefaultDict[str, float] = DefaultDict(
+            default_factory=lambda: 0)  # 群号->执行时间
 
     @property
     def logger(self) -> logging.Logger:
@@ -62,13 +65,89 @@ class CountdownBot(CQHttp):
     def config(self) -> CountdownBotConfig:
         return self.__config
 
+    def handle_command(self, evt: MessageEvent, context: dict, cooldown_identifier: str, current_chat_type: ChatType) -> bool:
+        done = False
+        for prefix in self.config.COMMAND_PREFIX:
+            if evt.raw_message.startswith(prefix):
+                done = True
+                splited = evt.raw_message[len(prefix):].split()
+                command_name = splited[0]
+                self.logger.info(f"Executing command: {splited[0]}")
+
+                if command_name not in self.command_manager.name_bindings:
+                    self.send(context, f"未知指令: \"{command_name}\"")
+                    break
+                command = self.command_manager.name_bindings[command_name]
+                if current_chat_type not in command.available_chats:
+                    self.send(context, f"指令 {command_name} 不可在此对话类型下使用")
+                    self.logger.info(
+                        f"Ignored {evt} as it doesn't support ChatType: {current_chat_type}")
+                    break
+                import time
+                if time.time()-self.last_command_execute.get(cooldown_identifier, 0) < self.config.COMMAND_COOLDOWN/1000:
+                    self.send(context, f"指令在冷却中,请稍后尝试执行.")
+                    break
+                self.last_command_execute.update(
+                    {cooldown_identifier: time.time()})
+                self.logger.debug(f"invoking {command_name}")
+                self.command_manager.name_bindings[command_name].invoke(
+                    args=splited[1:],
+                    raw_string=evt.raw_message,
+                    context=context,
+                    event=evt
+                )
+                break
+        return done
+
+    def __group_message_handler(self, context: dict) -> dict:
+        evt = event.GroupMessageEvent(context)
+        if not self.handle_command(
+            evt=evt, context=context, cooldown_identifier=f"group:{evt.group_id}", current_chat_type=ChatType.group
+        ):
+            self.event_manager.process_event(evt)
+            result = {}
+            for key in ["reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]:
+                if getattr(evt, key) is not None:
+                    result[key] = getattr(evt, key)
+            return result
+
+    def __private_message_handler(self, context: dict) -> dict:
+        evt = event.PrivateMessageEvent(context)
+
+        if not self.handle_command(
+            evt=evt, context=context, cooldown_identifier=f"private:{evt.user_id}", current_chat_type=ChatType.private
+        ):
+            self.event_manager.process_event(evt)
+            result = {}
+            for key in ["reply", "auto_escape"]:
+                if getattr(evt, key) is not None:
+                    result[key] = getattr(evt, key)
+            return result
+
+    def __discuss_message_handler(self, context: dict) -> dict:
+        evt = event.DiscussMessageEvent(context)
+
+        if not self.handle_command(
+            evt=evt, context=context, cooldown_identifier=f"discuss:{evt.discuss_id}", current_chat_type=ChatType.discuss
+        ):
+            self.event_manager.process_event(evt)
+            result = {}
+            for key in ["reply", "auto_escape", "at_sender"]:
+                if getattr(evt, key) is not None:
+                    result[key] = getattr(evt, key)
+            return result
+
     def __init_events(self):
-        self.on_message("private")(self.__make_event_handler(
-            event.PrivateMessageEvent, ["reply", "auto_escape"]))
-        self.on_message("group")(self.__make_event_handler(event.GroupMessageEvent, [
-            "reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]))
-        self.on_message("discuss")(self.__make_event_handler(
-            event.DiscussMessageEvent, ["reply", "auto_escape", "at_sender"]))
+        self.on_message("private")(self.__private_message_handler)
+        self.on_message("group")(self.__group_message_handler)
+        self.on_message("discuss")(self.__discuss_message_handler)
+
+        # self.on_message("private")(self.__make_event_handler(
+        # event.PrivateMessageEvent, ["reply", "auto_escape"]))
+        # self.on_message("group")(self.__make_event_handler(event.GroupMessageEvent, [
+        # "reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]))
+        # self.on_message("discuss")(self.__make_event_handler(
+        # event.DiscussMessageEvent, ["reply", "auto_escape", "at_sender"]))
         self.on_notice("group_upload")(self.__make_event_handler(
             event.GroupFileUploadEvent, []))
         self.on_notice("group_admin")(self.__make_event_handler(
@@ -99,14 +178,13 @@ class CountdownBot(CQHttp):
             if not os.path.exists(current_plugin/"plugin.py"):
                 # print(f"{current_plugin} 不存在plugin.py,已忽略")
                 self.logger.debug(
-                    f"Ignored {current_plugin}: doesn't has a 'plugin.py'")
-
+                    f"Ignored {current_plugin}: not provide  'plugin.py'")
                 continue
             plugin_module = importlib.import_module(f"{plugin_id}.plugin")
             if not hasattr(plugin_module, "get_plugin_class"):
                 # print(f"{plugin_id} 不存在get_plugin_class")
                 self.logger.debug(
-                    f"Ignored {current_plugin}: doesn't has 'get_plugin_class()'")
+                    f"Ignored {current_plugin}: not provide 'get_plugin_class()'")
                 continue
             self.logger.info(f"Loaded plugin: {plugin_id}")
             plugin_class = plugin_module.get_plugin_class()
@@ -163,6 +241,7 @@ class CountdownBot(CQHttp):
             stdout_handler
         )
         # self.logger.addFilter()
+        sys.stdout
 
     def init(self):
         self.__init_logger()
@@ -181,21 +260,69 @@ class CountdownBot(CQHttp):
         self.on_message()(self.message_handler)
         self.loop = asyncio.get_event_loop()
         self.input_thread = Thread(target=self.input_handler)
-        self.command_manager.register_command(
-            Command(
-                "<base>", "stop", self.__console_stop_command, None, "关闭Bot", is_console=True
-            )
-        )
-        self.command_manager.register_command(
-            Command(
-                "<base>", "help", self.__console_help_command, None, "查看帮助", is_console=True
-            )
-        )
-        self.command_manager.register_command(
-            Command(
-                "<base>", "post", self.__console_post_message_event, None, "模拟消息事件 | post <消息内容>", is_console=True
-            )
-        )
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="stop",
+            handler=self.__console_stop_command,
+            plugin=None,
+            help_string="关闭Bot",
+            available_chats=None,
+            alias=None,
+            is_console=True
+        ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="help",
+            handler=self.__console_help_command,
+            plugin=None,
+            help_string="查看帮助",
+            available_chats=None,
+            alias=None,
+            is_console=True
+        ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="post",
+            handler=self.__console_post_message_event,
+            plugin=None,
+            help_string="模拟发送MessageEvent | post 消息内容",
+            available_chats=None,
+            alias=None,
+            is_console=True
+        ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="help",
+            handler=self.__help_command,
+            plugin=None,
+            help_string="查看帮助 | help all 查看所有指令的帮助",
+            available_chats={ChatType.discuss,
+                             ChatType.private, ChatType.group},
+            alias=["帮助"],
+            is_console=False
+        ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="status",
+            handler=self.__status_command,
+            plugin=None,
+            help_string="查看Bot运行状态",
+            available_chats={ChatType.discuss,
+                             ChatType.private, ChatType.group},
+            alias=["状态"],
+            is_console=False
+        ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="plugins",
+            handler=self.__plugins_command,
+            plugin=None,
+            help_string="查看插件列表",
+            available_chats={ChatType.discuss,
+                             ChatType.private, ChatType.group},
+            alias=["插件"],
+            is_console=False
+        ))
 
     def __coroutine_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
@@ -226,22 +353,22 @@ class CountdownBot(CQHttp):
         while True:
             try:
                 string = input(">").strip()
+                splited = string.split(" ")
+                command_name, args = splited[0], splited[1:]
+                if command_name not in self.command_manager.console_commands:
+                    self.logger.info(f"Unknown command: {command_name}")
+                    continue
+                self.command_manager.console_commands[command_name].invoke(
+                    args=args,
+                    raw_string=string,
+                    context=None,
+                    event=None
+                )
             except (KeyboardInterrupt, EOFError):
                 self.stop()
             except Exception as ex:
                 import traceback
                 traceback.print_exc(ex)
-            splited = string.split(" ")
-            command_name, args = splited[0], splited[1:]
-            if command_name not in self.command_manager.console_commands:
-                self.logger.info(f"Unknown command: {command_name}")
-                continue
-            self.command_manager.console_commands[command_name].invoke(
-                args, string, None
-            )
-
-    def message_handler(self, context: dict):
-        self.logger.debug(context)
 
     def stop(self):
         self.logger.info("Shutting down..")
@@ -255,17 +382,44 @@ class CountdownBot(CQHttp):
             coro, self.loop
         ).add_done_callback(self.__coroutine_exception_handler)
 
-    def __console_stop_command(self, plugin, args: List[str], raw_string: str, context):
+    def __console_stop_command(self, plugin, args: List[str], raw_string: str, context, evt):
         self.stop()
 
-    def __console_help_command(self, plugin, args: List[str], raw_string: str, context):
+    def __console_help_command(self, plugin, args: List[str], raw_string: str, context, evt):
         for k, v in sorted(self.command_manager.console_commands.items(), key=lambda x: x[0]):
             self.logger.info(f"{k} --- {v.help_string}")
 
-    def __console_post_message_event(self, plugin, args: List[str], raw_string, context):
+    def __console_post_message_event(self, plugin, args: List[str], raw_string, context, evt):
         self.event_manager.process_event(
-            MessageEvent({"message": args[0]})
+            MessageEvent({"message": args[0], "post_type": "group"})
         )
+
+    def __help_command(self, plugin, args: List[str], raw_string: str, context, evt):
+        from io import StringIO
+        buf = StringIO()
+        command_list: List[Command] = []
+        chat_type = ChatType(context["message_type"])
+        for value in self.command_manager.commands.values():
+            for item in value.values():
+                if chat_type in item.available_chats or (args and args[0] == 'all'):
+                    command_list.append(item)
+        command_list.sort(key=lambda x: x.command_name)
+        for cmd in command_list:
+            buf.write(
+                f"{cmd.command_name}{'['+','.join(cmd.alias)+']' if cmd.alias else ''} --- {cmd.help_string}\n")
+        self.send(context, buf.getvalue())
+
+    def __status_command(self, plugin, args: List[str], raw_string: str, context, evt):
+        self.send(context, self.state_manager.generate_message())
+
+    def __plugins_command(self, plugin, args: List[str], raw_string: str, context, evt):
+        from io import StringIO
+        buf = StringIO()
+        for plugin in self.plugins:
+            meta = plugin.plugin_meta
+            buf.write(
+                f"{plugin.plugin_id} {meta.version}\n作者: {meta.author}\n描述: {meta.description}\n\n")
+        self.send(context, buf.getvalue())
 
     def __fill_dict(self, dic: dict, evt, val):
         if getattr(evt, val) is not None:

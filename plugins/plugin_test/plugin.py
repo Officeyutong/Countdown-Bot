@@ -1,7 +1,7 @@
 from common.plugin import Plugin
 from common.datatypes import PluginMeta
 from common.config_loader import ConfigBase
-from common.command import Command
+from common.command import Command, ChatType
 from common.event import *
 from common.loop import TimeTuple
 from typing import List
@@ -65,22 +65,23 @@ class MyPlugin(Plugin):
         # self.bot
         self.logger.info("You are loading Me!")
         self.logger.info(self.config.TEST_URL)
-        self.register_command(
-            self.wrap_command(
-                "test",
-                self.simple_command,
-                "帮助qwqqwq",
-                ["test1", "test2", "test3"]
-            )
-        )
-        self.register_command(Command(
-            self.plugin_id,
-            "qwq",
-            self.simple_console_command,
-            self,
-            "qwqqwq",
+        self.logger.debug(self.simple_console_command)
+        self.register_command_wrapped(
+            command_name="qwq",
+            command_handler=self.simple_console_command,
+            help_string="Meow~",
+            chats=None,
+            alias=None,
             is_console=True
-        ))
+        )
+        self.register_command_wrapped(
+            command_name="qwq",
+            command_handler=self.simple_command,
+            help_string="Meow~",
+            chats={ChatType.private},
+            alias=["qwq1", "Qwq2"],
+            is_console=False
+        )
         self.register_all_event_listeners(
             MyEventListener(self)
         )
@@ -89,11 +90,13 @@ class MyPlugin(Plugin):
             TimeTuple(datetime.now().hour,
                       datetime.now().minute+1), self.my_loop()
         )
+        import datetime
+        self.register_state_handler(lambda: f"现在是: {datetime.datetime.now()}")
 
-    def simple_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict):
+    def simple_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict, evt):
         print(locals())
 
-    def simple_console_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict):
+    def simple_console_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict, evt):
         print("qwqqwq")
         print(locals())
 

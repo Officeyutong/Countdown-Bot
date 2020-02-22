@@ -17,7 +17,11 @@ class MessageEvent(EventBase):
         super().__init__()
         self.context = context
         self.post_type = context["post_type"]
-
+        self.message_id: int = context.get("message_id", None)
+        self.user_id: int = context.get("user_id", None)
+        self.message = context.get("message", None)
+        self.raw_message: str = context.get("raw_message", None)
+        self.font: int = context.get("font", None)
 
 class PrivateMessageSubtype(Enum):
     friend = "friend"
@@ -135,11 +139,7 @@ class PrivateMessageEvent(MessageEvent):
         super().__init__(context)
         self.sub_type: PrivateMessageSubtype = PrivateMessageSubtype(
             context["sub_type"]) if context.get("sub_type", None) else None
-        self.message_id: int = context.get("message_id", None)
-        self.user_id: int = context.get("user_id", None)
-        self.message = context.get("message", None)
-        self.raw_message: str = context.get("raw_message", None)
-        self.font: int = context.get("font", None)
+
         self.sender: SimpleMessageSender = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
         self.anonymous: GroupAnonymousSender = GroupAnonymousSender(
@@ -153,13 +153,7 @@ class GroupMessageEvent(MessageEvent):
         super().__init__(context)
         self.sub_type: GroupMessageSubtype = GroupMessageSubtype(
             context["sub_type"]) if context.get("sub_type", None) else None
-        self.message_id: int = context.get("message_id", None)
-        self.user_id: int = context.get("user_id", None)
         self.group_id: int = context.get("group_id", None)
-
-        self.message = context.get("message", None)
-        self.raw_message: str = context.get("raw_message", None)
-        self.font: int = context.get("font", None)
         self.sender: SimpleMessageSender = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
         self.reply: str = None
@@ -175,13 +169,7 @@ class DiscussMessageEvent(MessageEvent):
     def __init__(self, context: dict):
         super().__init__(context)
         self.sub_type = "discuss"
-        self.message_id: int = context.get("message_id", None)
-        self.user_id: int = context.get("user_id", None)
         self.discuss_id: int = context.get("discuss_id", None)
-
-        self.message = context.get("message", None)
-        self.raw_message: str = context.get("raw_message", None)
-        self.font: int = context.get("font", None)
         self.sender: SimpleMessageSender = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
         self.reply: str = None

@@ -1,6 +1,6 @@
 from functools import wraps
 from .event import EventBase, Listener, EventManager, EventCallback
-from .command import CommandManager, Command, CommandHandler
+from .command import CommandManager, Command, CommandHandler, ChatType
 from typing import Callable, Set, Tuple, NoReturn, Type, Optional, Iterable
 from .datatypes import PluginMeta
 from .config_loader import ConfigBase
@@ -99,9 +99,18 @@ class Plugin:
                             f"Registering event listener {event_type} : {item}")
                         self.register_event_listener(event_type, item)
 
-    def wrap_command(self, command_name: str, command_handler: CommandHandler, help_string: str, alias: Optional[Iterable[str]] = None) -> Command:
-        return (Command(
-            self.__plugin_id, command_name, command_handler, self, help_string, alias
+    def register_command_wrapped(self, command_name: str, command_handler: CommandHandler, help_string: str, chats: Optional[Set[ChatType]], alias: Optional[Iterable[str]] = None, is_console: bool = False) -> Command:
+        self.logger.debug(command_handler)
+        self.register_command(Command(
+            alias=alias,
+            plugin_id=self.__plugin_id,
+            command_name=command_name,
+            handler=command_handler,
+            plugin=self,
+            help_string=help_string,
+            available_chats=chats,
+            is_console=is_console
+
         ))
 
     def register_command(self, command: Command) -> NoReturn:
