@@ -42,6 +42,11 @@ class CountdownBotConfig(ConfigBase):
 
 class CountdownBot(CQHttp):
     def __init__(self, app_root: Path, **flask_args):
+        """
+        初始化CountdownBot
+        @param app_root: 程序main.py所在的目录
+        @param flask_args: 传递给Flask的额外参数 
+        """
         self.app_root = app_root
         self.__config = load_from_file(
             self.app_root/"config.py", CountdownBotConfig)
@@ -65,13 +70,25 @@ class CountdownBot(CQHttp):
 
     @property
     def logger(self) -> logging.Logger:
+        """获取此Bot的Logger"""
         return self.__logger
 
     @property
     def config(self) -> CountdownBotConfig:
+        """Bot的全局配置"""
         return self.__config
 
     def handle_command(self, evt: MessageEvent, context: dict, cooldown_identifier: str, current_chat_type: ChatType) -> bool:
+        """
+        将一个消息事件视为命令进行处理。
+        此函数会在收到消息时被自动调用
+        @param evt: 代表此次处理的事件对象
+        @param context: evt.context
+        @param cooldown_identifier: 触发此事件的对象在统计命令冷却时的标识符
+        @param current_chat_type: 触发此事件的对象所处的聊天环境
+
+        @return: 这个事件是否为一次命令调用
+        """
         done = False
         for prefix in self.config.COMMAND_PREFIX:
             if evt.raw_message.startswith(prefix):
@@ -244,7 +261,14 @@ class CountdownBot(CQHttp):
         sys.stdout
 
     def init(self):
-        print("init..")
+        """
+        初始化CountdownBot，此函数会进行以下操作:
+        - 初始化Logger
+        - 加载插件并调用on_enable函数
+        - 注册内置命令,初始化内部事件监听器(用以处理基础事件)
+        - 初始化协程池
+
+        """
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
         self.__load_plugins()
@@ -258,8 +282,10 @@ class CountdownBot(CQHttp):
 
         self.logger.info(
             f"{commands_count} group commands, {len(self.command_manager.console_commands)} console commands, {len(self.plugins)} plugins, {listeners_count} listeners, {len(self.state_manager.state_callers)} states")
-        self.on_message()(self.message_handler)
+        # self.on_message()(self.message_handler)
         self.loop = asyncio.get_event_loop()
+        self.loop_thread = Thread(
+            target=lambda: self.loop.run_forever())
         self.input_thread = Thread(target=self.input_handler)
         self.command_manager.register_command(Command(
             plugin_id="<base>",
@@ -336,14 +362,20 @@ class CountdownBot(CQHttp):
             is_console=False
         ))
 
-    def __coroutine_exception_handler(self, future: asyncio.Future):
+    def __future_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
         if exc:
             raise exc
 
     def start(self):
-        self.loop_thread = Thread(
-            target=lambda: self.loop.run_forever())
+        """
+        启动CountdownBot
+        - 启动协程池
+        - 启动Schedule Loops
+        - 启动控制台输入线程
+        - 运行Flask
+        """
+
         self.logger.info("Starting schedule loops..")
         # self.loop.set_exception_handler()
         # self.loop.set_debug(True)
@@ -353,7 +385,7 @@ class CountdownBot(CQHttp):
         self.loop_thread.start()
         for item in self.loop_manager.tasks:
             asyncio.run_coroutine_threadsafe(item, self.loop).add_done_callback(
-                self.__coroutine_exception_handler)
+                self.__future_exception_handler)
         self.input_thread.start()
         self.run(
             host=self.config.POST_ADDRESS,
@@ -383,25 +415,42 @@ class CountdownBot(CQHttp):
                 traceback.print_exc(ex)
 
     def stop(self):
+        """
+        停止CountdownBot
+        """
         self.logger.info("Shutting down..")
+        for plugin in self.plugins:
+            self.logger.info(f"Disabling {plugin.plugin_id}")
+            plugin.on_disable()
         self.loop.call_soon_threadsafe(self.loop.stop)
         stop_thread(self.input_thread)
         os.kill(os.getpid(), 1)
 
     def submit_async_task(self, coro):
+        """
+        提交异步任务至协程池
+        @param coro: coroutine对象
+        @return: Future对象,异常会被自动处理
+        """
         self.logger.info(f"Submitted async task {coro}")
         future = asyncio.run_coroutine_threadsafe(
             coro, self.loop
         )
-        future.add_done_callback(self.__coroutine_exception_handler)
+        future.add_done_callback(self.__future_exception_handler)
         return future
 
     def submit_multithread_task(self, fn: Callable[[], Any], *args, **kwargs):
+        """
+        提交同步任务至线程池
+        @param fn: Callable对象
+        @param args,kwargs: 调用fn时传递的参数
+        @return: Future对象,异常会被自动处理
+        """
         self.logger.info(f"Submitted multithread task {fn}")
         future = self.thread_pool.submit(
             fn, *args, **kwargs
         )
-        future.add_done_callback(self.__coroutine_exception_handler)
+        future.add_done_callback(self.__future_exception_handler)
         return future
 
     def __console_stop_command(self, plugin, args: List[str], raw_string: str, context, evt):

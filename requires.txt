@@ -21,4 +21,4 @@ sox
 redis
 jieba
 aiohttp
-aiocqhttp
+aiofiles
