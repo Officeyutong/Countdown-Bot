@@ -4,7 +4,18 @@ from common.config_loader import ConfigBase
 from common.command import Command, ChatType
 from common.event import *
 from common.loop import TimeTuple
-from typing import List
+from typing import List, Dict, Generator, Any
+
+from dataclasses import dataclass
+
+
+@dataclass
+class SessionTuple:
+    group_id: int
+    user_id: int
+
+    def __hash__(self):
+        return hash((self.group_id, self.user_id))
 
 
 class MyEventListener(Listener):
@@ -61,11 +72,40 @@ class MyPlugin(Plugin):
         self.bot.logger.debug("Meow~")
         # raise Exception("嘤嘤嘤")
 
+    def session_handler(self, group_id: int, user_id: int):
+        a = yield
+        b = yield
+        c = yield
+        self.bot.send_group_msg(
+            group_id=group_id, message=f"[CQ:at,qq={user_id}] '{b}' '{c}'")
+
+    def enter_session(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict, evt):
+        data_tuple = SessionTuple(evt.group_id, evt.user_id)
+
+        if data_tuple in self.sessions:
+            self.bot.send(context, "你已经开启了一个Session")
+            return
+        self.bot.send(context, "请尝试发送两条消息")
+        self.sessions[data_tuple] = self.session_handler(
+            evt.group_id, evt.user_id)
+        self.sessions[data_tuple].send(None)
+
+    def evt_handler(self, evt: GroupMessageEvent):
+        data_tuple = SessionTuple(evt.group_id, evt.user_id)
+        if data_tuple in self.sessions:
+            try:
+                self.sessions[data_tuple].send(evt.raw_message)
+            except StopIteration:
+                del self.sessions[data_tuple]
+                self.bot.send_group_msg(
+                    group_id=evt.group_id, message=f"[CQ:at,qq={evt.user_id}] 您已退出session")
+
     def on_enable(self):
         # self.bot
         self.logger.info("You are loading Me!")
         self.logger.info(self.config.TEST_URL)
         self.logger.debug(self.simple_console_command)
+        self.sessions: Dict[SessionTuple, Any] = dict()
         self.register_command_wrapped(
             command_name="qwq",
             command_handler=self.simple_console_command,
@@ -80,6 +120,14 @@ class MyPlugin(Plugin):
             help_string="Meow~",
             chats={ChatType.private},
             alias=["qwq1", "Qwq2"],
+            is_console=False
+        )
+        self.register_command_wrapped(
+            command_name="session",
+            command_handler=self.enter_session,
+            help_string="Session测试",
+            chats={ChatType.group},
+            alias=[],
             is_console=False
         )
         self.register_all_event_listeners(
@@ -99,6 +147,9 @@ class MyPlugin(Plugin):
             print("Raising...")
             raise Exception("qwq")
         self.bot.submit_multithread_task(test)
+        self.register_event_listener(
+            GroupMessageEvent, self.evt_handler
+        )
 
     def simple_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict, evt):
         print(locals())
