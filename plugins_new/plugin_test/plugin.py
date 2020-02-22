@@ -86,10 +86,10 @@ class MyPlugin(Plugin):
             MyEventListener(self)
         )
         from datetime import datetime
-        self.register_schedule_loop(
-            TimeTuple(datetime.now().hour,
-                      datetime.now().minute+1), self.my_loop()
-        )
+        # self.register_schedule_loop(
+        #     TimeTuple(datetime.now().hour,
+        #               datetime.now().minute+1), self.my_loop()
+        # )
         import datetime
         self.register_state_handler(lambda: f"现在是: {datetime.datetime.now()}")
 

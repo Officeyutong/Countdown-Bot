@@ -76,8 +76,8 @@ class Plugin:
     def logger(self) -> logging.Logger:
         return self.bot.logger
 
-    def register_schedule_loop(self, time: TimeTuple, coro, name: str = ""):
-        self.schedule_loop_manager.register(time, coro, name)
+    def register_schedule_loop(self, time: TimeTuple, coro, name: str = "", init=None):
+        self.schedule_loop_manager.register(time, coro, name, init)
 
     def register_event_listener(self, event: EventBase, callback: EventCallback) -> NoReturn:
         self.__event_listeners.add((event, callback))

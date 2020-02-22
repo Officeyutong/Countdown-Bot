@@ -16,10 +16,12 @@ class ScheduleLoopManager:
         self.execute_delay = execute_delay
         self.bot = bot
 
-    def register(self, execute_time: TimeTuple, coro, name: str = ""):
+    def register(self, execute_time: TimeTuple, coro, name: str = "", init=None):
         async def wrapper():
             from datetime import datetime
             self.bot.logger.info(f"Loop {name} started")
+            if init:
+                await init
             while True:
                 while True:
                     now = datetime.now()
