@@ -1,4 +1,5 @@
 from cqhttp import CQHttp
+# from aiocqhttp import CQHttp
 from pathlib import Path
 from common.plugin import Plugin
 from common.event import EventManager, MessageEvent
@@ -6,11 +7,12 @@ import common.event as event
 from common.command import CommandManager, Command, ChatType
 from common.state import StateManager
 from common.config_loader import ConfigBase, load_from_file
-from typing import List, Iterable, Callable, DefaultDict
+from typing import List, Iterable, Callable, DefaultDict, Any
 from common.datatypes import PluginMeta
 from common.loop import ScheduleLoopManager
 from common.utils import stop_thread
 from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 import sys
 import os
 import importlib
@@ -35,6 +37,7 @@ class CountdownBotConfig(ConfigBase):
     DEBUG = False
     SERVER_URL = "http://ecs.zhehao.top"
     LOGGING_LEVEL = logging.INFO
+    MAX_THREAD_EXECUTORS = 10
 
 
 class CountdownBot(CQHttp):
@@ -42,8 +45,8 @@ class CountdownBot(CQHttp):
         self.app_root = app_root
         self.__config = load_from_file(
             self.app_root/"config.py", CountdownBotConfig)
-        super().__init__(self.config.API_URL,
-                         self.config.ACCESS_TOKEN, self.config.SECRET)
+        super().__init__(api_root=self.config.API_URL,
+                         access_token=self.config.ACCESS_TOKEN, secret=self.config.SECRET)
         self.plugins: List[Plugin] = []
         self.event_manager = EventManager(self)
         self.state_manager = StateManager()
@@ -56,6 +59,9 @@ class CountdownBot(CQHttp):
         )
         self.last_command_execute: DefaultDict[str, float] = DefaultDict(
             default_factory=lambda: 0)  # 冷却标识符->执行时间
+        self.thread_pool = ThreadPoolExecutor(
+            max_workers=self.config.MAX_THREAD_EXECUTORS
+        )
 
     @property
     def logger(self) -> logging.Logger:
@@ -141,13 +147,6 @@ class CountdownBot(CQHttp):
         self.on_message("private")(self.__private_message_handler)
         self.on_message("group")(self.__group_message_handler)
         self.on_message("discuss")(self.__discuss_message_handler)
-
-        # self.on_message("private")(self.__make_event_handler(
-        # event.PrivateMessageEvent, ["reply", "auto_escape"]))
-        # self.on_message("group")(self.__make_event_handler(event.GroupMessageEvent, [
-        # "reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]))
-        # self.on_message("discuss")(self.__make_event_handler(
-        # event.DiscussMessageEvent, ["reply", "auto_escape", "at_sender"]))
         self.on_notice("group_upload")(self.__make_event_handler(
             event.GroupFileUploadEvent, []))
         self.on_notice("group_admin")(self.__make_event_handler(
@@ -391,9 +390,19 @@ class CountdownBot(CQHttp):
 
     def submit_async_task(self, coro):
         self.logger.info(f"Submitted async task {coro}")
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             coro, self.loop
-        ).add_done_callback(self.__coroutine_exception_handler)
+        )
+        future.add_done_callback(self.__coroutine_exception_handler)
+        return future
+
+    def submit_multithread_task(self, fn: Callable[[], Any], *args, **kwargs):
+        self.logger.info(f"Submitted multithread task {fn}")
+        future = self.thread_pool.submit(
+            fn, *args, **kwargs
+        )
+        future.add_done_callback(self.__coroutine_exception_handler)
+        return future
 
     def __console_stop_command(self, plugin, args: List[str], raw_string: str, context, evt):
         self.stop()

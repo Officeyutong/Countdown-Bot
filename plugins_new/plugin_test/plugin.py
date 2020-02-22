@@ -93,6 +93,13 @@ class MyPlugin(Plugin):
         import datetime
         self.register_state_handler(lambda: f"现在是: {datetime.datetime.now()}")
 
+        def test():
+            import time
+            time.sleep(5)
+            print("Raising...")
+            raise Exception("qwq")
+        self.bot.submit_multithread_task(test)
+
     def simple_command(self, plugin: 'MyPlugin', args: List[str], raw_string: str, context: dict, evt):
         print(locals())
 
