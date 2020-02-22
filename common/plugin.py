@@ -1,11 +1,11 @@
 from functools import wraps
-from .event import EventBase, Listener, EventManager, EventCallback
-from .command import CommandManager, Command, CommandHandler, ChatType
+from common.event import EventBase, Listener, EventManager, EventCallback
+from common.command import CommandManager, Command, CommandHandler, ChatType
 from typing import Callable, Set, Tuple, NoReturn, Type, Optional, Iterable
-from .datatypes import PluginMeta
-from .config_loader import ConfigBase
-from .state import StateManager, StateHandler
-from .loop import ScheduleLoopManager, TimeTuple
+from common.datatypes import PluginMeta
+from common.config_loader import ConfigBase
+from common.state import StateManager, StateHandler
+from common.loop import ScheduleLoopManager, TimeTuple
 from abc import abstractclassmethod
 from pathlib import Path
 import logging

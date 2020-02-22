@@ -166,12 +166,13 @@ class CountdownBot(CQHttp):
             event.GroupInviteOrAddRequestEvent, ["approve", "reason"]))
 
     def __load_plugins(self):
+        plugin_base_dir = self.app_root/"plugins_new"
         # 加载插件
-        sys.path.append(str(os.path.abspath(self.app_root/"plugins")))
+        sys.path.append(str(os.path.abspath(plugin_base_dir)))
         self.logger.info("Loading plugins..")
-        for plugin_dir in os.listdir(self.app_root/"plugins"):
+        for plugin_dir in os.listdir(plugin_base_dir):
             plugin_id = plugin_dir
-            current_plugin = self.app_root/"plugins"/plugin_dir
+            current_plugin = plugin_base_dir/plugin_dir
             if not os.path.isdir(current_plugin):
                 self.logger.debug(f"Ignored {current_plugin}: not a directory")
                 continue
@@ -323,6 +324,17 @@ class CountdownBot(CQHttp):
             alias=["插件"],
             is_console=False
         ))
+        self.command_manager.register_command(Command(
+            plugin_id="<base>",
+            command_name="about",
+            handler=self.__about_command,
+            plugin=None,
+            help_string="关于",
+            available_chats={ChatType.discuss,
+                             ChatType.private, ChatType.group},
+            alias=["关于"],
+            is_console=False
+        ))
 
     def __coroutine_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
@@ -411,6 +423,10 @@ class CountdownBot(CQHttp):
 
     def __status_command(self, plugin, args: List[str], raw_string: str, context, evt):
         self.send(context, self.state_manager.generate_message())
+
+    def __about_command(self, plugin, args: List[str], raw_string: str, context, evt):
+        self.send(context, "https://gitee.com/yutong_java/Countdown-Bot")
+        self.send(context, "by MikuNotFoundException")
 
     def __plugins_command(self, plugin, args: List[str], raw_string: str, context, evt):
         from io import StringIO
