@@ -60,7 +60,7 @@ class CountdownBot(CQHttp):
             self.config.CHECK_INTERVAL, self.config.EXECUTE_DELAY, self)
         self.flask_args = flask_args
         self.__logger = logging.Logger(
-            "CountdownBot"
+            "CountdownBot", level=self.config.LOGGING_LEVEL
         )
         self.last_command_execute: DefaultDict[str, float] = DefaultDict(
             default_factory=lambda: 0)  # 冷却标识符->执行时间
