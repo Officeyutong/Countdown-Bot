@@ -285,6 +285,34 @@
                         </div>
                     </div>
                 </div>
+                <div v-if="showing" class="ui segment stacked">
+                    <div class="ui inverted active dimmer" v-if="loading">
+                        <div class="ui text loader">
+                            正在加载..
+                        </div>
+                    </div>
+                    <div class="ui header">
+                        <h1>物品</h1>
+                    </div>
+                    <table class="ui table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="ui" v-for="(value,key) in data.items">
+                                <td style="width: 50px">{{key}}</td>
+                                <td style="width: 170px">
+                                    <div class="ui fluid input">
+                                        <input type="text" v-model="value.name">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="ui right aligned container">
                     <div v-if="showing" class="ui green button" v-on:click="save">
                         保存

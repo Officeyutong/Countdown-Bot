@@ -491,6 +491,22 @@ class Game:
             self.punish_list.add(arg)
             self.send_message("[CQ:at,qq={}] 通过道具将惩罚转移给了 [CQ:at,qq={}]\n{}".format(
                 player_id, arg, self.get_status_punish()))
+        elif item_id == "adjoint_punish":
+            arg = int(arg)
+            if arg not in self.players:
+                self.send_message(
+                    "[CQ:at,qq={}] 指定玩家未参与.".format(player_id))
+                return
+            if player_id not in self.punish_list:
+                self.send_message("[CQ:at,qq={}] 你没有被惩罚.".format(player_id))
+                return
+            if player_id == arg:
+                self.send_message("[CQ:at,qq={}] ???".format(player_id))
+                return
+            self.player_items[player_id].remove(item_id)
+            self.punish_list.add(arg)
+            self.send_message(
+                f"[CQ:at,qq={player_id}] 邀请 [CQ:at,qq={arg}] 和自己一起受罚\n{self.get_status_punish()}")
 
     def accept(self, player_id: int):
         if self.stage != GameStage.PUNISH:
