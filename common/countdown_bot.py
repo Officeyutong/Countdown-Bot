@@ -366,8 +366,9 @@ class CountdownBot(CQHttp):
         exc = future.exception()
         if exc:
             import traceback
+            traceback.print_exc()
             # raise exc
-            self.logger.exception("Exception: ")
+            # self.logger.exception("Exception: ")
             # self.logger.info(traceback.format_exc())
 
     def start(self):
