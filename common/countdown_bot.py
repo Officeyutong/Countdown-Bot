@@ -117,7 +117,8 @@ class CountdownBot(CQHttp):
                     args=splited[1:],
                     raw_string=evt.raw_message,
                     context=context,
-                    event=evt
+                    event=evt,
+                    bot=self
                 )
                 break
         return done

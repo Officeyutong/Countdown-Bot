@@ -111,8 +111,8 @@ class Plugin:
         """
         self.schedule_loop_manager.register(time, coro, name, init)
 
-
     T = TypeVar("T")
+
     def register_event_listener(self, event: Type[T], callback: Callable[[T], None]) -> NoReturn:
         """
         注册事件监听函数。
@@ -143,7 +143,7 @@ class Plugin:
                             f"Registering event listener {event_type} : {item}")
                         self.register_event_listener(event_type, item)
 
-    def register_command_wrapped(self, command_name: str, command_handler: CommandHandler, help_string: str, chats: Optional[Set[ChatType]], alias: Optional[Iterable[str]] = None, is_console: bool = False) -> Command:
+    def register_command_wrapped(self, command_name: str, command_handler: CommandHandler, help_string: str, chats: Optional[Set[ChatType]], alias: Optional[Iterable[str]] = None, is_console: bool = False, is_async=False) -> Command:
         """
         注册指令。
         @param command_name: 命令名称
@@ -152,7 +152,7 @@ class Plugin:
         @param chats: 此命令可用的聊天环境，Set[ChatType]，对于控制台命令请留为None
         @param alias: 别名列表。控制台命令不支持别名
         @param is_console: 是否为控制台命令
-
+        @param is_async: 是否为异步命令,如果是,command_handler应该为协程对象
         """
         self.logger.debug(command_handler)
         self.register_command(Command(
@@ -163,7 +163,8 @@ class Plugin:
             plugin=self,
             help_string=help_string,
             available_chats=chats,
-            is_console=is_console
+            is_console=is_console,
+            is_async=is_async
 
         ))
 

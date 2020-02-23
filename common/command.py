@@ -21,6 +21,7 @@ class Command:
                  available_chats: Set[ChatType],
                  alias: Optional[Iterable[str]] = None,
                  is_console=False,
+                 is_async=False
                  ):
         self.plugin_id = plugin_id
         self.command_name = command_name
@@ -30,9 +31,14 @@ class Command:
         self.plugin = plugin
         self.is_console = is_console
         self.available_chats = available_chats
+        self.is_async = is_async
 
-    def invoke(self, args: List[str], raw_string: str, context: dict = None, event: MessageEvent = None):
-        self.handler(self.plugin, args, raw_string, context, event)
+    def invoke(self, args: List[str], raw_string: str, context: dict = None, event: MessageEvent = None, bot = None):
+        if self.is_async:
+            bot.submit_async_task(self.handler(
+                self.plugin, args, raw_string, context, event))
+        else:
+            self.handler(self.plugin, args, raw_string, context, event)
 
     def __repr__(self) -> str:
         return f"<Command name={self.command_name} handler={self.handler} plugin_id={self.plugin_id}>"
