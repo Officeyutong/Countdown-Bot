@@ -365,7 +365,8 @@ class CountdownBot(CQHttp):
     def __future_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
         if exc:
-            raise exc
+            import traceback
+            self.logger.info(traceback.format_exc())
 
     def start(self):
         """
@@ -379,9 +380,9 @@ class CountdownBot(CQHttp):
         self.logger.info("Starting schedule loops..")
         # self.loop.set_exception_handler()
         # self.loop.set_debug(True)
-        self.loop.set_exception_handler(
-            self.__loop_exception_handler
-        )
+        # self.loop.set_exception_handler(
+        #     self.__loop_exception_handler
+        # )
         self.loop_thread.start()
         for item in self.loop_manager.tasks:
             asyncio.run_coroutine_threadsafe(item, self.loop).add_done_callback(
