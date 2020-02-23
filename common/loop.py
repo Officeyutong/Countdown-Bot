@@ -18,21 +18,26 @@ class ScheduleLoopManager:
 
     def register(self, execute_time: TimeTuple, coro, name: str = "", init=None):
         async def wrapper():
-            from datetime import datetime
-            self.bot.logger.info(f"Loop {name} started")
-            if init:
-                await init
-            while True:
+            try:
+                from datetime import datetime
+                self.bot.logger.info(f"Loop {name} started")
+                if init:
+                    await init
                 while True:
-                    now = datetime.now()
-                    self.bot.logger.debug(f"Checking schedule loop {name}")
-                    if now.hour == execute_time.hour and now.minute == execute_time.minute:
-                        break
-                    await asyncio.sleep(self.check_interval)
-                self.bot.logger.info(f"Executing schedule loop {name}")
-                self.bot.logger.debug(f"{coro} {type(coro)}")
-                # import pdb; pdb.set_trace()
-                await coro
-                self.bot.logger.info(f"{name} executed.")
-                await asyncio.sleep(self.execute_delay)
+                    while True:
+                        now = datetime.now()
+                        self.bot.logger.debug(f"Checking schedule loop {name}")
+                        if now.hour == execute_time.hour and now.minute == execute_time.minute:
+                            break
+                        await asyncio.sleep(self.check_interval)
+                    self.bot.logger.info(f"Executing schedule loop {name}")
+                    self.bot.logger.debug(f"{coro} {type(coro)}")
+                    # import pdb; pdb.set_trace()
+                    await coro
+                    self.bot.logger.info(f"{name} executed.")
+                    await asyncio.sleep(self.execute_delay)
+            except:
+                self.bot.logger.exception("Exception:")
+                import traceback
+                traceback.print_exc()
         self.tasks.append(wrapper())

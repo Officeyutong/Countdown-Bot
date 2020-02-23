@@ -365,10 +365,10 @@ class CountdownBot(CQHttp):
     def __future_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
         if exc:
-            import traceback
-            traceback.print_exc()
+            # import traceback
+            # traceback.print_exc()
             # raise exc
-            # self.logger.exception("Exception: ")
+            self.logger.exception("Exception: ")
             # self.logger.info(traceback.format_exc())
 
     def start(self):
