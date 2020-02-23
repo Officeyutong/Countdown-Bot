@@ -38,6 +38,6 @@ class ScheduleLoopManager:
                     await asyncio.sleep(self.execute_delay)
             except:
                 self.bot.logger.exception("Exception:")
-                import traceback
-                traceback.print_exc()
+                # import traceback
+                # traceback.print_exc()
         self.tasks.append(wrapper())

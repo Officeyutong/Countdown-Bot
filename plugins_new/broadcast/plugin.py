@@ -66,7 +66,7 @@ class BroadcastPlugin(Plugin):
     async def schedule_loop(self):
         if self.config.USING_URL_LIST:
             async with aiohttp.ClientSession() as client:
-                async with client.get(self.config.USING_URL_LIST) as resp:
+                async with client.get(self.config.LIST_URL) as resp:
                     data = await resp.json()
         else:
             data = self.config.LIST
