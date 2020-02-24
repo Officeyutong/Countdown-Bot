@@ -3,12 +3,14 @@ from cqhttp import CQHttp
 from enum import Enum
 from global_vars import VARS
 from collections import namedtuple
+from typing import Dict, List, Set, Callable, Union
 import sys
 import global_vars
 import random
 import os
 import json
 import flask
+from threading import Lock
 config = global_vars.CONFIG[__name__]
 app: flask.Flask = global_vars.VARS["web_app"]
 commands = None
@@ -28,7 +30,7 @@ STAGES = {
     GameStage.SELECT_PUNISH: "选择惩罚中",
     GameStage.PUNISH: "惩罚进行中"
 }
-
+WEB_DIR = os.path.join(os.path.dirname(__file__), "web/")
 HELP_STR =\
     """开始 ---- 开始本群游戏
 拼点 ---- 参与拼点
@@ -37,22 +39,24 @@ HELP_STR =\
 帮助 ---- 查看帮助
 提醒 ---- 提醒未拼点玩家参与拼点
 跳过 ---- 跳过未拼点玩家
+终止 ---- 强行终止当前游戏 **在并非有人咕掉游戏的情况下使用本指令可能会招致部分玩家的极度反感(比如开发者)**
 选择 [题库] ---- 选择惩罚题库 
-使用物品 [ID] ---- 使用物品
+使用物品 [ID] [参数] ---- 使用物品
 查看物品 ---- 查看物品列表"""
 DATA_PATH = os.path.join(os.path.dirname(__file__))
 
 
-# def plugin():
-#     return {
-#         "author": "officeyutong",
-#         "version": 1.0,
-#         "description": "真心话大冒险支持"
-#     }
+def plugin():
+    return {
+        "author": "officeyutong",
+        "version": 1.0,
+        "description": "真心话大冒险支持"
+    }
 
 
 def load():
     global games, commands
+    print("Loading...")
     VARS["zxh_games"] = {}
     VARS["commands"] = set()
     commands = VARS["commands"]
@@ -66,19 +70,43 @@ def encode_json(obj):
     return json.JSONEncoder().encode(obj)
 
 
-@app.route("/zxh/get_data")
+@app.route("/zxh/get_data", methods=["POST"])
 def web_get_data():
-    return encode_json(load_data())
+    dat = flask.request.form
+    if dat.get("password", None).lower() != get_md5(get_md5(config.ADMIN_PASSWORD)+"qwqqwqqwq"):
+        return encode_json({
+            "code": -1, "message": "密码错误"
+        })
+    return encode_json({
+        "code": 0, "data": load_data()
+    })
 
 
 @app.route("/zxh/set_data", methods=["POST"])
 def web_set_data():
     dat = flask.request.form
-    if dat.get("password", None) != config.ADMIN_PASSWORD:
+    if dat.get("password", None).lower() != get_md5(get_md5(config.ADMIN_PASSWORD)+"qwqqwqqwq"):
         return encode_json({
             "code": -1, "message": "密码错误"
         })
-    
+    save_data(json.JSONDecoder().decode(dat["data"]))
+    return encode_json({
+        "code": 0, "message": "操作成功"
+    })
+    # flask.make_response()
+
+
+@app.route("/zxh/edit", methods=["GET"])
+def web_edit_page():
+    return flask.send_from_directory(WEB_DIR, "edit.html")
+
+
+def get_md5(text: str) -> str:
+    import hashlib
+    ins = hashlib.md5()
+    ins.update(text.encode("utf-8"))
+    return ins.hexdigest()
+
 
 class Game:
     # 群号
@@ -115,19 +143,24 @@ class Game:
     next_punish: set = None
 
     def __init__(self, bot, group):
-        self.group = group
-        self.players = set()
-        self.stage = GameStage.WAITING_TO_START
-        self.bot = bot
-        self.join_at_next = []
-        self.exit_at_next = []
-        self.non_played = set()
-        self.points = {}
-        self.adjoint_punish = set()
-        self.limits = dict()
-        self.player_items = dict()
-        self.countdowns = []
-        self.next_punish = set()
+        self.group: int = group
+        self.players: Set[int] = set()
+        self.stage: GameStage = GameStage.WAITING_TO_START
+        self.bot: CQHttp = bot
+        self.join_at_next: List[int] = []
+        self.exit_at_next: List[int] = []
+        self.non_played: List[int] = set()
+        self.points: Dict[int, int] = {}
+        self.adjoint_punish: Set[int] = set()
+        self.limits: Dict[int, List[str]] = dict()
+        self.player_items: Dict[int, List[str]] = dict()
+        self.countdowns: List[List[Union[int, Callable[[], None]]]] = []
+        self.next_punish: Set[int] = set()
+        # 接下来每一局这些玩家要自动加上给定的点数
+        self.add_points: Dict[int, int] = dict()
+        self.player_list_lock = Lock()
+        self.base_lock = Lock()
+
         # self.punishes = set()
         # self.send_message("群 {} 的游戏创建成功qwq".format(self.group))
 
@@ -135,27 +168,27 @@ class Game:
         """向这个游戏对应的群发送消息"""
         self.bot.send_group_msg(group_id=self.group, message=message)
 
-    def get_profile(self, player)->str:
-        """获取玩家个人信息，以 "群名片(QQ昵称)" 的形式返回"""
+    def get_profile(self, player) -> str:
+        """获取玩家个人信息，以 "群名片 (QQ昵称)" 的形式返回"""
         profile = self.bot.get_group_member_info(
             group_id=self.group, user_id=player)
         return "{}({})".format(profile["card"], profile["nickname"])
 
-    def get_status_player_score(self)->str:
+    def get_status_player_score(self) -> str:
         """获取玩家分数状态文本"""
         msg = ""
         msg += "玩家点数:\n"
-        for k, v in self.points.items():
+        for k, v in sorted(self.points.items(), key=lambda x: x[1]):
             msg += "{}: {}\n".format(self.get_profile(k), v)
         return msg
 
-    def get_status_punish(self)->str:
+    def get_status_punish(self) -> str:
         msg = "尚未接受处罚的玩家:\n"
         for player in self.punish_list:
             msg += self.get_profile(player)
         return msg
 
-    def get_status_distribute(self)->str:
+    def get_status_distribute(self) -> str:
         """获取在拼点时候的状态文本"""
         msg = ""
         msg += self.get_status_player_score()
@@ -164,9 +197,9 @@ class Game:
             msg += "{}\n".format(self.get_profile(player))
         return msg
 
-    def get_status(self)->str:
+    def get_status(self) -> str:
         """获取总体状态文本"""
-        msg = "当前阶段: {}\n当前共有 {} 人参加:\n".format(
+        msg = "当前阶段: {}\n当前共有 {} 人参加:\n\n".format(
             STAGES[self.stage], len(self.players))
         for player_id in self.players:
             msg += self.get_profile(player_id)+"\n"
@@ -176,40 +209,53 @@ class Game:
             msg += self.get_status_punish()
         return msg
 
-    def notify_non_played(self)->None:
+    def notify_non_played(self) -> None:
         if self.stage != GameStage.DISTRIBUTE_POINTS:
             return
         if self.non_played:
             msg = ""
             for x in self.non_played:
                 msg += "[CQ:at,qq={}]\n".format(x)
-            msg += "请立刻参与拼点qwq"
+            msg += "\n请立刻参与拼点qwq"
             self.send_message(msg)
 
-    def skip_non_played(self)->None:
+    def skip_non_played(self) -> None:
         if self.stage != GameStage.DISTRIBUTE_POINTS:
             return
         if self.non_played:
+            if len(self.points) < 1:
+                self.send_message("必须至少有一个玩家进行拼点才可跳过!")
+                return
             self.non_played.clear()
             self._handle_play_end()
+
+    def force_stop(self) -> None:
+        # 强行终止游戏
+        self._game_end()
 
     def join(self, player_id: int):
         """玩家加入游戏"""
         if player_id not in self.players:
+            self.player_list_lock.acquire()
             if self.stage == GameStage.WAITING_TO_START:
                 self.players.add(player_id)
-                self.send_message("[CQ:at,qq={}] 成功加入游戏qwq.\n输入 帮助 查看帮助\n当前状态:\n".format(
+                print(f"{player_id} joined,{self.players}")
+                self.send_message("[CQ:at,qq={}] 成功加入游戏qwq.\n输入 \"帮助\" 查看帮助\n当前状态:\n".format(
                     player_id)+self.get_status())
             else:
+                print(
+                    f"{player_id} scheduled to join next,{self.join_at_next},{self.players}")
                 self.join_at_next.append(player_id)
                 self.send_message("[CQ:at,qq={}] 你将会在下次游戏开始时自动加入游戏哦qwq".format(
                     player_id))
+            self.player_list_lock.release()
         else:
             self.send_message("[CQ:at,qq={}] 你已经加入游戏了qwq".format(player_id))
 
     def exit(self, player_id: int):
         """玩家退出游戏"""
         if player_id in self.players:
+            self.player_list_lock.acquire()
             if self.stage == GameStage.WAITING_TO_START:
                 self.players.remove(player_id)
                 # del self.limits[player_id]
@@ -219,12 +265,19 @@ class Game:
                     del self.limits[player_id]
                 if player_id in self.adjoint_punish:
                     self.adjoint_punish.remove(player_id)
+                if player_id in self.add_points:
+                    self.add_points.pop(player_id)
+                print(f"{player_id} exited,{self.players}")
                 self.send_message("[CQ:at,qq={}] 成功退出游戏qwq，当前状态:\n".format(
                     player_id)+self.get_status())
+
             else:
                 self.exit_at_next.append(player_id)
+                print(
+                    f"{player_id} scheduled to join next,{self.exit_at_next},{self.players}")
                 self.send_message("[CQ:at,qq={}] 你将会在游戏结束时自动退出游戏哦qwq".format(
                     player_id))
+            self.player_list_lock.release()
         else:
             self.send_message(
                 "[CQ:at,qq={}] 你不在当前游戏内呢qwq".format(player_id))
@@ -241,15 +294,15 @@ class Game:
         for x in self.players:
             self.non_played.add(x)
         self.stage = GameStage.DISTRIBUTE_POINTS
-        self.send_message("拼点开始啦！\n使用指令 拼点 参与qwq")
+        self.send_message("拼点开始啦！\n使用指令 \"拼点\" 参与qwq")
 
-    def _handle_play_end(self)->None:
+    def _handle_play_end(self) -> None:
         msg = "拼点结束！\n"+self.get_status_player_score()
 
         def key_func(x): return x[1]
         minval = min(self.points.items(), key=key_func)
         maxval = max(self.points.items(), key=key_func)
-        msg += "点数最小: {} {}\n点数最大: {} {}\n".format(self.get_profile(
+        msg += "\n点数最小: \n{} {}\n\n点数最大: \n{} {}\n\n".format(self.get_profile(
             minval[0]), minval[1], self.get_profile(maxval[0]), maxval[1])
         self.punish_list = self.adjoint_punish.copy()
 
@@ -257,19 +310,21 @@ class Game:
             self.adjoint_punish.remove(minval[0])
             self.send_message("{} 已成为最小点数，下局起不再连带受罚。".format(
                 self.get_profile(minval[0])))
-        if not self.next_punish:
-            self.punish_list += self.next_punish
+        if self.next_punish:
+            # self.punish_list += self.next_punish
+            self.punish_list = self.punish_list.union(self.next_punish)
             self.next_punish.clear()
         else:
             if self.max_punish:
                 self.punish_list.add(maxval[0])
             else:
                 self.punish_list.add(minval[0])
+        print(self.punish_list)
         self.selector = minval[0]
         msg += "下面将会由点数最小的人([CQ:at,qq={}])选择惩罚方式:\n".format(minval[0])
         for k, v in get_problem_set_list().items():
             msg += "{}({})\n".format(v, k)
-        msg += "使用指令 选择 [题库ID] 来选择处罚方式."
+        msg += "使用指令 \"选择 [题库ID]\" 来选择处罚方式."
         self.stage = GameStage.SELECT_PUNISH
         self.send_message(msg)
 
@@ -285,10 +340,22 @@ class Game:
         val = random.randint(1, 100)
         while val == min(self.points.values(), default=101) or val == max(self.points.values(), default=-1):
             val = random.randint(1, 100)
+        if player_id in self.add_points:
+            raw_points = val
+            val = min(100, val+self.add_points[player_id])
+            val = max(1, val)
+            self.send_message(
+                f"[CQ:at,qq={player_id}],原始点数: {raw_points},惩罚点数{val}")
+        if val > 70:
+            joke_message = "看起来很不错呢qwq"
+        elif val < 30:
+            joke_message = "看起来有点凉呢qwq"
+        else:
+            joke_message = "qwq"
         self.points[player_id] = val
         self.non_played.remove(player_id)
         self.send_message(
-            "[CQ:at,qq={}] 你的点数为 {} ，看起来很不错呢qwq\n其他人:\n{}".format(player_id, val, self.get_status_distribute()))
+            f"[CQ:at,qq={player_id}] 你的点数为 {val} ,{joke_message}\n{self.get_status_distribute()}")
         if not self.non_played:
             self._handle_play_end()
 
@@ -318,7 +385,7 @@ class Game:
         msg += "处罚内容为:\n"
         if selected_item["type"] == "simple":
             msg += selected_item["content"]+"\n"
-            msg += "完成处罚的玩家请使用指令 接受 确认。\n或者使用 使用物品 [物品ID] 使用物品."
+            msg += "完成处罚的玩家请使用指令 \"接受\" 确认。\n或者使用 \"使用物品 [物品ID]\" 使用物品."
             self.send_message(msg)
             self.stage = GameStage.PUNISH
         elif selected_item["type"] == "item":
@@ -346,9 +413,22 @@ class Game:
         elif punish["type"] == "problem_set_limit":
             self.limits[player_id] = punish["val"].split("|")
             self.countdowns.append(
-                [punish["rounds"]+1, lambda: self.limits.pop(player_id, None)])
+                [
+                    int(punish["rounds"])+1,
+                    lambda: self.limits.pop(player_id, None),
+                    f"[CQ:at,qq={player_id}] 的题库限制 {punish['val']} 已经解除"
+                ])
         elif punish["type"] == "next_punish":
             self.next_punish = self.punish_list.copy()
+        elif punish["type"] == "add_points":
+            self.countdowns.append(
+                [
+                    int(punish["rounds"])+1,
+                    lambda: self.add_points.pop(
+                        player_id) if player_id in self.add_points else None,
+                    f"[CQ:at,qq={player_id}] 的每局增加 {punish['val']} 点数已经解除"
+                ])
+            self.add_points[player_id] = int(punish["val"])
     # def _handle_
 
     def _give_item(self, player_id: int, item_id: str):
@@ -361,13 +441,20 @@ class Game:
 
     def _game_end(self):
         self.send_message("本轮游戏结束.")
-        self.points.clear()
-        self.punish_list.clear()
+        if self.points:
+            self.points.clear()
+        # self.player_list_lock.acquire()
+        if self.punish_list:
+            self.punish_list.clear()
+        # self.player_list_lock.release()
         self.selector = -1
+        # 倒计时函数
         for item in self.countdowns:
             item[0] -= 1
             if item[0] == 0:
                 item[1]()
+                if len(item) == 3:
+                    self.send_message(item[2])
         self.countdowns = list(filter(lambda x: x[0] != 0, self.countdowns))
         self.stage = GameStage.WAITING_TO_START
         for x in self.join_at_next:
@@ -377,7 +464,7 @@ class Game:
         self.join_at_next.clear()
         self.exit_at_next.clear()
 
-    def get_items(self, player_id: int)->str:
+    def get_items(self, player_id: int) -> str:
         msg = "[CQ:at,qq={}] 你的物品有:\n".format(player_id)
         ITEMS = get_items()
         for x in self.player_items.get(player_id, []):
@@ -396,11 +483,30 @@ class Game:
             if arg not in self.players:
                 self.send_message("[CQ:at,qq={}] 指定玩家未参与.".format(player_id))
                 return
+            if player_id not in self.punish_list:
+                self.send_message("[CQ:at,qq={}] 你没有被惩罚.".format(player_id))
+                return
             self.player_items[player_id].remove(item_id)
             self.punish_list.remove(player_id)
             self.punish_list.add(arg)
             self.send_message("[CQ:at,qq={}] 通过道具将惩罚转移给了 [CQ:at,qq={}]\n{}".format(
                 player_id, arg, self.get_status_punish()))
+        elif item_id == "adjoint_punish":
+            arg = int(arg)
+            if arg not in self.players:
+                self.send_message(
+                    "[CQ:at,qq={}] 指定玩家未参与.".format(player_id))
+                return
+            if player_id not in self.punish_list:
+                self.send_message("[CQ:at,qq={}] 你没有被惩罚.".format(player_id))
+                return
+            if player_id == arg:
+                self.send_message("[CQ:at,qq={}] ???".format(player_id))
+                return
+            self.player_items[player_id].remove(item_id)
+            self.punish_list.add(arg)
+            self.send_message(
+                f"[CQ:at,qq={player_id}] 邀请 [CQ:at,qq={arg}] 和自己一起受罚\n{self.get_status_punish()}")
 
     def accept(self, player_id: int):
         if self.stage != GameStage.PUNISH:
@@ -457,7 +563,9 @@ def zxh_command(bot: CQHttp, context, message):
         if 3+len(args[1:]) != len(func.__code__.co_varnames):
             bot.send(context, "参数个数不足或过多")
             return
+        # game.base_lock.acquire()
         func(bot, context, games[context["group_id"]], *args[1:])
+        # game.base_lock.release()
 
 
 def load_data():
@@ -470,14 +578,14 @@ def save_data(obj):
         return file.write(json.JSONEncoder().encode(obj))
 
 
-def get_problem_set_list()->dict:
+def get_problem_set_list() -> dict:
     result = {}
     for k, v in load_data()["problem_set"].items():
         result[k] = v["name"]
     return result
 
 
-def get_items()->dict:
+def get_items() -> dict:
     result = {}
     for k, v in load_data()["items"].items():
         result[k] = v["name"]
@@ -522,3 +630,7 @@ def zxh_command_提醒(bot, context, game: Game):
 
 def zxh_command_跳过(bot, context, game: Game):
     game.skip_non_played()
+
+
+def zxh_command_终止(bot, context, game: Game):
+    game.force_stop()

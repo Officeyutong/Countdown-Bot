@@ -14,8 +14,12 @@ import flask
 import os
 import importlib
 import global_vars
+import common.event as event
 # import PyV8
-bot = CQHttp(api_root=config.API_URL, access_token=config.ACCESS_TOKEN)
+from common.countdown_bot import CountdownBot
+import pathlib
+bot = CountdownBot(pathlib.Path("."))
+# bot = CQHttp(api_root=config.API_URL, access_token=config.ACCESS_TOKEN)
 log = bot.logger
 
 
@@ -36,7 +40,7 @@ def start():
         elif os.path.exists(os.path.join(plugin_dir, "config_default.py")):
             global_vars.CONFIG["plugins.%s.%s" % (plugin, plugin)] = importlib.import_module(
                 "plugins.%s.config_default" % plugin)
-        this = importlib.import_module("plugins.%s.%s"%(plugin,plugin))
+        this = importlib.import_module("plugins.%s.%s" % (plugin, plugin))
         if "plugin" in dir(this):
             loaded_plugins[plugin] = (dict(**this.plugin(), **{
                 "load": getattr(this, "load", None),
@@ -52,41 +56,64 @@ def start():
             continue
         if plugin.startswith("__"):
             continue
-        load_plugin(plugin)
+        try:
+            load_plugin(plugin)
+        except Exception as ex:
+            import traceback
+            traceback.print_exc()
+
     print_log("Registered commands:\n{}".format("".join(
         map(lambda x: "{} :{}\n".format(x[0], x[1]), registered_commands.items()))))
     print_log("Registered message listeners:\n{}".format(message_listeners))
     print_log("Registered schedule loops:\n{}".format(loop_threads))
     for x in loop_threads:
         x.start()
+
+    bot.init()
+    bot.event_manager.register_event(
+        event.GroupMessageEvent,
+        lambda evt: handle_message(evt.context)
+    )
+    bot.event_manager.register_event(
+        event.GroupInviteOrAddRequestEvent,
+        lambda evt: handle_group_invite(evt.context)
+    )
+    bot.start()
+    os.kill(os.getpid(), 1)
     # 启动CQ Bot
-    print_log("Starting CQHttp...")
-    app_thread = threading.Thread(target=lambda: bot.run(
-        host=config.POST_ADDRESS, port=config.POST_PORT))
-    app_thread.start()
-    global_vars.VARS["app_thread"] = app_thread
-    input_loop()
+    # print_log("Starting CQHttp...")
+    # app_thread = threading.Thread(target=lambda: bot.run(
+    # host=config.POST_ADDRESS, port=config.POST_PORT))
+    # app_thread.start()
+    # bot.run(
+    #     host=config.POST_ADDRESS, port=config.POST_PORT, debug=True)
+    # global_vars.VARS["app_thread"] = app_thread
+    # input_loop()
 
 
-@console_command(name="stop", help="关闭Bot")
-def stop(args):
-    import util
-    import global_vars
-    print_log("Shutting down schedule loops..")
-    for x in global_vars.loop_threads:
-        util.stop_thread(x)
-    print_log("Shutting flask..")
-    util.stop_thread(global_vars.VARS["app_thread"])
-    exit(0)
+# @console_command(name="stop", help="关闭Bot")
+# def stop(args):
+#     import util
+#     import global_vars
+#     # exit(0)
+#     import os
+#     import signal
+
+#     print_log("Shutting down schedule loops..")
+#     for x in global_vars.loop_threads:
+#         util.stop_thread(x)
+#     print_log("Shutting flask..")
+#     util.stop_thread(global_vars.VARS["app_thread"])
+#     os.kill(os.getpid(), 1)
 
 
-@console_command(name="help", help="查看帮助")
-def console_help(args):
-    for k, v in console_commands.items():
-        print_log("%s %s" % (k, v[0]))
+# @console_command(name="help", help="查看帮助")
+# def console_help(args):
+#     for k, v in console_commands.items():
+#         print_log("%s %s" % (k, v[0]))
 
 
-@bot.on_message()
+# @bot.on_message()
 def handle_message(context):
     print_log("Handling message:{}".format(context))
     if "group_id" in context:
@@ -110,7 +137,7 @@ def handle_message(context):
                 if context["group_id"] not in last:
                     last[context["group_id"]] = 0
                 if (time.time()-last[context["group_id"]])*1000 < config.COMMAND_COOLDOWN:
-                    bot.send(context, "指令冷却中.")
+                    bot.send(context, "指令冷却中,请稍后尝试执行.")
                     return
                 else:
                     last[context["group_id"]] = time.time()
@@ -124,24 +151,46 @@ def handle_message(context):
                 listener.__call__(bot, context, text)
 
 
-@bot.on_request("group", "friend")
+# @bot.on_request("group", "friend")
 def handle_group_invite(context):
+    print(context)
+    # 不处理加群请求
+    if context["request_type"] == "group" and context["sub_type"] == "add":
+        return {}
+
     return {"approve": True}
 
 
-def input_loop():
-    while True:
-        args = (input(">")+" ").split(" ")
-        if args[0] in console_commands:
-            try:
-                console_commands[args[0]][1](args)
-            except Exception as ex:
-                print_log(ex)
-                # raise ex
-        else:
-            print("Unknown command: {}".format(args))
+# def input_loop():
+#     while True:
+#         args = (input(">")+" ").split(" ")
+#         if args[0] in console_commands:
+#             try:
+#                 console_commands[args[0]][1](args)
+#             except Exception as ex:
+#                 print_log(ex)
+#                 # raise ex
+#         else:
+#             print("Unknown command: {}".format(args))
+
+
+def main2():
+    from common.countdown_bot import CountdownBot
+    from pathlib import Path
+
+    bot = CountdownBot(Path(__file__).parent)
+    bot.init()
+    bot.start()
 
 
 if __name__ == "__main__":
     # pdb.set_trace()
-    start()
+    import sys
+    if len(sys.argv) > 1:
+        debug_arg = sys.argv[1]
+        if debug_arg == "debug":
+            main2()
+    else:
+        start()
+    # start()
+    # main2()

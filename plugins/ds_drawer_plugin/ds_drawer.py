@@ -17,6 +17,7 @@ class SAMNode:
     node_list = []
     accept = False
     to = None
+    chd_on_tree: list = None
 
     def __str__(self):
         ret = "SAMNode{{ID:{},max_len={},rightsize={},".format(
@@ -38,6 +39,7 @@ class SAMNode:
         self.right_size = collections.OrderedDict()
         self.right_size[strid] = 1
         self.to = list()
+        self.chd_on_tree = list()
 
     def clone(self):
         cloned = SAMNode(self.node_list, self.max_len)
@@ -70,6 +72,16 @@ def append(char: str, last: SAMNode, root: SAMNode, str_id: int)->SAMNode:
     return new
 
 
+def DFS(node: SAMNode):
+    for chd in node.chd_on_tree:
+        DFS(chd)
+        for k, v in chd.right_size.items():
+            if k not in node.right_size:
+                node.right_size[k] = v
+            else:
+                node.right_size[k] += v
+
+
 def generate_graph(string, format):
     nodes = []
     root = SAMNode(nodes, 0)
@@ -87,13 +99,14 @@ def generate_graph(string, format):
     dot = Digraph("SAM")
     nodes.sort(key=lambda x: x.max_len, reverse=True)
     for x in nodes:
+        for i in range(1, 1+len(strs)):
+            if i not in x.right_size:
+                x.right_size[i] = 0
         if x.link is not None:
-            for i in range(1, 1+len(strs)):
-                if i not in x.link.right_size:
-                    x.link.right_size[i] = 0
-                if i not in x.right_size:
-                    x.right_size[i] = 0
-                x.link.right_size[i] += x.right_size[i]
+            x.link.chd_on_tree.append(x)
+    DFS(root)
+    for x in nodes:
+        sorted(x.right_size)
     nodes.sort(key=lambda x: x.vtx_id)
     for node in nodes:
         label = "{}\nMax={}".format(node.vtx_id, node.max_len)

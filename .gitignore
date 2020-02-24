@@ -1,10 +1,14 @@
 bot-data/
-group-*.json
+/plugins/sign_in/data/*
+user-*.json
 *_config.py
 plugins/data/*
 cats.json
 config.py
 data.json
+/plugins/zxhdmx/data.json
+logs
+test.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -118,3 +122,8 @@ dmypy.json
 
 #Pycharm
 .idea
+
+# vscode config
+.vscode
+.vscode/*
+.vscode/settings.json

@@ -14,14 +14,13 @@ import util
 import global_vars
 config = global_vars.CONFIG[__name__]
 
+
 def plugin():
     return {
         "author": "officeyutong",
         "version": 1.0,
         "description": "可以在Docker内运行Python代码."
     }
-
-
 
 
 @command(name="exec", help="在Docker中执行Python3.6代码")
@@ -33,6 +32,7 @@ def exec_python_code(bot: CQHttp, context=None, args=None):
     for item in pattern.findall(code):
         code = code.replace("&#{};".format(
             item), bytes([int(item)]).decode("utf-8"))
+    code = f"""CALLER_UID={context['user_id']}\nCALLER_NICKNAME={str(context['sender']['nickname']).encode()}.decode()\nCALLER_CARD={str(context['sender']['card']).encode()}.decode()\n"""+code
     run_python_in_docker(callback, code)
 
 
@@ -80,7 +80,7 @@ def run_python_in_docker(callback, code):
         file.write("{}".format(code))
     print_log("Container created.")
     container = client.containers.create(config.DOCKER_IMAGE, "python /temp/{}".format(
-        file_name), tty=True, detach=False,  volumes={tmp_dir: {"bind": "/temp", "mode": "ro"}}, mem_limit="10m", memswap_limit="20m", oom_kill_disable=True, nano_cpus=int(0.1*1/1e-9))
+        file_name), tty=True, detach=False, network_mode="none",  volumes={tmp_dir: {"bind": "/temp", "mode": "ro"}}, mem_limit="50m", memswap_limit="50m", oom_kill_disable=True, nano_cpus=int(0.1*1/1e-9))
     # container = client.containers.create("python", "uname -a".format(
     #     file_name), tty=True, detach=False)
     thd = Thread(target=execute_daemon_calc, args=(

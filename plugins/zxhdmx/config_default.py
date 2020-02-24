@@ -3,7 +3,5 @@ ENABLE_GROUPS = [
 
 ]
 # 管理员列表
-ADMINS = [
-
-]
+ADMIN_PASSWORD = "qwqqwqqwq"
 MIN_REQUIRED_PLAYERS = 2

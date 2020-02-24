@@ -1,0 +1,70 @@
+{
+    "problem_set": {
+        "1": {
+            "name": "\u771f\u5fc3\u8bdd",
+            "rules": [
+                {
+                    "type": "simple",
+                    "content": "<\u95ee\u98981>"
+                },
+                {
+                    "type": "simple",
+                    "content": "<\u95ee\u98982>"
+                },
+                {
+                    "type": "simple",
+                    "content": "<\u95ee\u98983>"
+                },
+                {
+                    "type": "simple",
+                    "content": "qwq"
+                },
+                {
+                    "type": "simple",
+                    "content": "qwq"
+                }
+            ]
+        },
+        "2": {
+            "name": "\u5927\u5192\u9669",
+            "rules": [
+                {
+                    "type": "punish",
+                    "content": "add_points_50"
+                }
+            ]
+        }
+    },
+    "items": {
+        "transfer_punish": {
+            "name": "\u5c06\u5f53\u524d\u6240\u53d7\u60e9\u7f5a\u8f6c\u79fb\u7ed9 \u53e6\u4e00\u540d\u73a9\u5bb6"
+        }
+    },
+    "punish": {
+        "add_points_50": {
+            "type": "add_points",
+            "name": "\u63a5\u4e0b\u6765\u4e24\u5c40\u5185\uff0c\u88ab\u60e9\u7f5a\u73a9\u5bb6\u6bcf\u4e00\u5c40\u589e\u52a050\u70b9",
+            "rounds": "2",
+            "val": "50"
+        },
+        "max_punish": {
+            "type": "max_punish",
+            "rounds": 2,
+            "name": "\u63a5\u4e0b\u67652\u5c40\u5185\uff0c\u70b9\u6570\u6700\u5927\u8005\u53d7\u7f5a\uff0c\u7531\u70b9\u6570\u6700\u5c0f \u8005\u9009\u62e9"
+        },
+        "punish_until_min": {
+            "type": "punish_until_min",
+            "name": "\u5f53\u524d\u73a9\u5bb6\u4e00\u76f4\u53d7\u7f5a\u76f4\u5230\u6210\u4e3a\u70b9\u6570\u6700\u5c0f"
+        },
+        "problem_set_limit": {
+            "type": "problem_set_limit",
+            "name": "\u5f53\u524d\u73a9\u5bb6\u63a5\u4e0b\u67652\u5c40\u4e4b\u5185\u53ea\u80fd\u9009\u62e9\u771f\u5fc3\u8bdd",
+            "val": "1",
+            "rounds": 2
+        },
+        "next_punish": {
+            "type": "next_punish",
+            "name": "\u4e0b\u4e00\u5c40\u7684\u60e9\u7f5a\u7531\u5f53\u524d\u6240\u6709\u53d7\u7f5a\u73a9\u5bb6\u627f\u62c5\u3002"
+        }
+    }
+}

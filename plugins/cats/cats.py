@@ -89,6 +89,10 @@ def suck_cats(bot: CQHttp, context, args):
 
 @command(name="upload", help="上传猫猫图片")
 def upload_cats(bot: CQHttp, context, args):
+    if not str(context['group_id']) in config.WHITE_LIST_GROUPS:
+        bot.send(context, "本群无权限上传图片!")
+        return
+
     if len(args) < 2:
         bot.send(context, "请上传图片!")
         return

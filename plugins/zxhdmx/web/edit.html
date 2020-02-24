@@ -1,0 +1,343 @@
+<html>
+
+<head>
+    <title>编辑真心话大冒险题库</title>
+    <!-- <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> -->
+    <script src="http://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script>
+    <script src="http://cdn.staticfile.org/vue/2.5.17/vue.min.js"></script>
+    <script src="http://cdn.staticfile.org/semantic-ui/2.3.3/semantic.min.js"></script>
+    <script src="http://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <link href="http://cdn.staticfile.org/semantic-ui/2.3.3/semantic.min.css" rel="stylesheet">
+    <script src="http://cdn.staticfile.org/blueimp-md5/2.10.0/js/md5.js"></script>
+</head>
+
+<body style="background-color: rgb(236, 233, 233)">
+    <div class="ui main container" style="margin-top:70px;margin-bottom:70px">
+        <div style="top: 10%">
+            <script>
+                var vue;
+                $(this).ready(function () {
+                    vue = new Vue({
+
+                        el: "#main",
+                        data: {
+                            password: "",
+                            data: {},
+                            loading: false,
+                            error: false,
+                            error_text: "",
+                            showing: false
+                        },
+                        methods: {
+                            load: function () {
+                                this.loading = true;
+                                this.error = false;
+                                $.ajax({
+                                    url: "/zxh/get_data",
+                                    method: "POST",
+                                    data: {
+                                        password: md5(md5(vue.password) + "qwqqwqqwq")
+                                    },
+                                    success: function (dat) {
+                                        dat = JSON.parse(dat);
+                                        vue.loading = false;
+                                        if (dat.code != 0) {
+                                            vue.error = true;
+                                            vue.error_text = dat.message;
+                                            return;
+                                        }
+                                        vue.data = dat.data;
+                                        vue.showing = true;
+
+                                    }, error: function (obj) {
+                                        vue.loading = false;
+                                        vue.error = true;
+                                        vue.error_text = obj;
+                                    }
+
+                                })
+                            }, save: function () {
+                                this.loading = true;
+                                $.ajax({
+                                    url: "/zxh/set_data",
+                                    method: "POST",
+                                    data: {
+                                        password: md5(md5(vue.password) + "qwqqwqqwq"),
+                                        data: JSON.stringify(vue.data)
+                                    }, success: function (dat) {
+                                        dat = JSON.parse(dat);
+                                        vue.loading = false;
+                                        if (dat.code != 0) {
+                                            $("#base-message-box .content p").text(dat.message);
+                                            $("#base-message-box").modal("show");
+                                            // vue.error = true;
+                                            // vue.error_text = dat.message;
+                                            return;
+                                        }
+                                        // vue.data = dat.data;
+                                        // vue.showing = true;
+                                        $("#base-message-box .content p").text("保存成功");
+                                        $("#base-message-box").modal("show");
+                                    }, error: function (obj) {
+                                        vue.loading = false;
+                                        $("#base-message-box .content p").text(obj);
+                                        $("#base-error-box").modal("show");
+                                    }
+                                });
+                            }
+
+                        }
+                    });
+                });
+            </script>
+            <div class="ui left aligned container" style="width: 100%" id="main">
+                <div class="ui header">
+                    <h1>编辑真心话大冒险题库</h1>
+                </div>
+                <div class="ui error message" v-if="error">
+                    <div class="ui header">
+                        错误
+                    </div>
+                    <p>{{error_text}}</p>
+                </div>
+                <div class="ui segment stacked">
+                    <div class="ui inverted active dimmer" v-if="loading">
+                        <div class="ui text loader">
+                            正在加载..
+                        </div>
+                    </div>
+                    <div class="ui form" id="main-form">
+                        <div class="field">
+                            <label>管理员密码:</label>
+                            <input type="password" id="string" v-model="password" v-on:keyup.enter="load">
+                        </div>
+                        <div class="ui submit button" id="submit-button" v-on:click="load">提交</div>
+                    </div>
+                </div>
+                <div v-if="showing" class="ui segment stacked">
+                    <div class="ui inverted active dimmer" v-if="loading">
+                        <div class="ui text loader">
+                            正在加载..
+                        </div>
+                    </div>
+                    <div class="ui header">
+                        <h1>题库列表</h1>
+                    </div>
+                    <div class="ui" v-for="(value,key,index) in data.problem_set">
+                        <div class="ui header">
+                            <h3>{{value.name}}({{key}})</h3>
+                        </div>
+                        <table class="ui table">
+                            <thead>
+                                <tr>
+                                    <th>编号</th>
+                                    <th>惩罚类型</th>
+                                    <th>惩罚内容</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="ui" v-for="(item,index) in value.rules">
+                                    <td style="width: 50px">{{index+1}}</td>
+                                    <td>
+                                        <div class="ui fluid input"><input type="text" v-model="item.type"></div>
+                                        <!-- <select class="ui dropdown" v-model="item.type">
+                                            <option>simple</option>
+                                            <option v-for="(value,key) in data.punish">
+                                                {{key}}
+                                            </option>
+                                        </select> -->
+                                    </td>
+                                    <td>
+                                        <div class="ui fluid input"><input type="text" v-model="item.content"></div>
+                                    </td>
+                                    <td style="width: 50px">
+                                        <div class="ui red circular icon button"
+                                            v-on:click="value.rules.splice(index,1)">
+                                            <i class="remove icon"></i>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="ui right aligned container">
+                            <div class="ui blue button"
+                                v-on:click="value.rules.push({'type':'simple','content':'qwq'})">
+                                添加
+                            </div>
+                        </div>
+                        <div class="ui section divider" v-if="index!=data.problem_set.length-1"
+                            style="margin-bottom:0px">
+                        </div>
+                    </div>
+
+                </div>
+                <div v-if="showing" class="ui segment stacked">
+                    <div class="ui inverted active dimmer" v-if="loading">
+                        <div class="ui text loader">
+                            正在加载..
+                        </div>
+                    </div>
+                    <div class="ui header">
+                        <h1>特殊惩罚</h1>
+                    </div>
+                    <table class="ui table">
+                        <thead>
+                            <tr>
+                                <th>编号</th>
+                                <th>ID</th>
+                                <th>类型</th>
+                                <th>解释</th>
+                                <th>附加内容</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="ui" v-for="(value,key,index) in data.punish">
+                                <td style="width: 50px">{{index+1}}</td>
+                                <td style="width: 170px">
+                                    {{key}}
+                                    <!-- <div class="ui input">
+                                        <input v-model="key">
+                                    </div> -->
+                                </td>
+                                <td style="width: 200px">
+                                    <!-- <div class="ui fluid input"><input type="text" v-model="value.type"></div> -->
+                                    <select class="ui fluid search dropdown" v-model="value.type">
+                                        <option>max_punish</option>
+                                        <option>punish_until_min</option>
+                                        <option>problem_set_limit</option>
+                                        <option>next_punish</option>
+                                        <option>add_points</option>
+                                    </select>
+                                </td>
+                                <td style="width: 250px">
+                                    <div class="ui fluid input"><input type="text" v-model="value.name"></div>
+                                </td>
+                                <td>
+                                    <div v-if="value.type=='max_punish'">
+                                        <div class="ui labeled input" style="width: 50px">
+                                            <div class="ui label">
+                                                持续轮数:
+                                            </div>
+                                            <input v-model="value.rounds">
+                                        </div>
+                                    </div>
+                                    <div v-else-if="value.type=='punish_until_min'">
+
+                                    </div>
+                                    <div v-else-if="value.type=='problem_set_limit'">
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    持续轮数:
+                                                </div>
+                                                <input v-model="value.rounds">
+                                            </div>
+                                        </span>
+                                        <br>
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    限定值:
+                                                </div>
+                                                <input v-model="value.val">
+                                            </div>
+                                        </span>
+                                    </div>
+                                    <div v-else-if="value.type=='next_punish'">
+
+                                    </div>
+                                    <div v-else-if="value.type=='add_points'">
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    持续轮数:
+                                                </div>
+                                                <input v-model="value.rounds">
+                                            </div>
+                                        </span>
+                                        <br>
+                                        <span>
+                                            <div class="ui labeled input" style="width: 50px">
+                                                <div class="ui label">
+                                                    限定值:
+                                                </div>
+                                                <input v-model="value.val">
+                                            </div>
+                                        </span>
+                                    </div>
+
+                                </td>
+                                <td style="width: 50px">
+                                    <div class="ui red circular icon button" v-on:click="Vue.delete(data.punish,key)">
+                                        <i class="remove icon"></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="ui right aligned container">
+                        <div class="ui green button"
+                            v-on:click="Vue.set(data.punish,Object.keys(data.punish).length.toString(),{'type':'next_punish','name':'qwq'})">
+                            添加
+                        </div>
+                    </div>
+                </div>
+                <div v-if="showing" class="ui segment stacked">
+                    <div class="ui inverted active dimmer" v-if="loading">
+                        <div class="ui text loader">
+                            正在加载..
+                        </div>
+                    </div>
+                    <div class="ui header">
+                        <h1>物品</h1>
+                    </div>
+                    <table class="ui table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>说明</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="ui" v-for="(value,key) in data.items">
+                                <td style="width: 50px">{{key}}</td>
+                                <td style="width: 170px">
+                                    <div class="ui fluid input">
+                                        <input type="text" v-model="value.name">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="ui right aligned container">
+                    <div v-if="showing" class="ui green button" v-on:click="save">
+                        保存
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="ui center aligned  container">
+        <div style="color: darkgrey">
+            Powered by MikuNotFoundException.<br>
+            QQ:814980678
+        </div>
+    </div>
+    <div class="ui modal" id="base-message-box">
+        <div class="header">消息</div>
+        <div class="content">
+            <p></p>
+        </div>
+        <div class="actions">
+            <div class="ui approve button">
+                确定
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
