@@ -38,7 +38,7 @@ class ReadPlugin(Plugin):
 
     def command_read(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
         def wrapper():
-            text = " ".join(args[1:])
+            text = " ".join(args)
             if len(text) > self.config.MAX_STRING_LENGTH:
                 self.bot.send(context, "字符串过长")
             else:
