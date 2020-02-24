@@ -7,7 +7,7 @@ from common.command import ChatType
 from common.event import GroupMessageEvent
 import aiohttp
 import urllib
-from typing import Dict,List
+from typing import Dict, List
 from io import StringIO
 
 
@@ -48,30 +48,28 @@ class WeatherPlugin(Plugin):
 最高温度: {data['tmp_max']}摄氏度
 最低温度: {data['tmp_min']}摄氏度"""
 
-    def command_weather(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
-        async def wrapper():
-            weather_now = await self.get_data(args[0], "weather", "now")
-            weather_forecast = await self.get_data(args[0], "weather", "forecast")
-            if not weather_now['status'] == "ok":
-                self.bot.send(context, f"Error: {weather_now['status']}")
-                return
-            if not weather_forecast['status'] == 'ok':
-                self.bot.send(context, f"Error: {weather_forecast['status']}")
-                return
-            air_now = await self.get_data(weather_now['basic']['parent_city'], "air", "now")
-            message = StringIO()
-            message.write(self.generate_location(weather_now['basic']))
-            message.write(f"更新时间:{weather_now['update']['loc']}\n\n")
-            message.write(self.generate_weather(weather_now['now'],
-                                                air_now['air_now_city'] if air_now['status'] == "ok" else {'qlty': "未知", 'aqi': '未知'}))
-            message.write("\n最近三天:\n")
-            for index, data in enumerate(weather_forecast['daily_forecast']):
-                message.write(self.generate_forecast(index, data))
-                if index >= 2:
-                    break
-                message.write('\n')
-            self.bot.send(context, message.getvalue())
-        self.bot.submit_async_task(wrapper())
+    async def command_weather(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
+        weather_now = await self.get_data(args[0], "weather", "now")
+        weather_forecast = await self.get_data(args[0], "weather", "forecast")
+        if not weather_now['status'] == "ok":
+            self.bot.send(context, f"Error: {weather_now['status']}")
+            return
+        if not weather_forecast['status'] == 'ok':
+            self.bot.send(context, f"Error: {weather_forecast['status']}")
+            return
+        air_now = await self.get_data(weather_now['basic']['parent_city'], "air", "now")
+        message = StringIO()
+        message.write(self.generate_location(weather_now['basic']))
+        message.write(f"更新时间:{weather_now['update']['loc']}\n\n")
+        message.write(self.generate_weather(weather_now['now'],
+                                            air_now['air_now_city'] if air_now['status'] == "ok" else {'qlty': "未知", 'aqi': '未知'}))
+        message.write("\n最近三天:\n")
+        for index, data in enumerate(weather_forecast['daily_forecast']):
+            message.write(self.generate_forecast(index, data))
+            if index >= 2:
+                break
+            message.write('\n')
+        self.bot.send(context, message.getvalue())
 
     def on_enable(self):
         self.aioclient = aiohttp.ClientSession()
@@ -82,7 +80,8 @@ class WeatherPlugin(Plugin):
             command_handler=self.command_weather,
             help_string="查询天气 | weather [地名/城市代码/IP地址/经度,纬度] (单个地名半角逗号分割小到大的行政区排列)",
             chats={ChatType.discuss, ChatType.group, ChatType.private},
-            alias=["天气"]
+            alias=["天气"],
+            is_async=True
         )
 
 
