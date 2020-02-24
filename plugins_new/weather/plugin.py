@@ -7,7 +7,7 @@ from common.command import ChatType
 from common.event import GroupMessageEvent
 import aiohttp
 import urllib
-from typing import Dict
+from typing import Dict,List
 from io import StringIO
 
 
