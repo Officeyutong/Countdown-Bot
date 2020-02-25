@@ -20,7 +20,7 @@ class AsyncHTTPAPIClient:
     def invoke_async(self, api_name: str, data: dict) -> Future:
         return self.invoke(api_name, data, False)
 
-    def invoke(self, api_name: str, data: dict, wait_to_finish: bool = True) -> Union[dict, Future]:
+    def invoke(self, api_name: str, data: dict, wait_to_finish: bool = True) -> Union[dict, asyncio.Future]:
         """
         调用HTTPAPI
         @param api_name: API名

@@ -78,7 +78,7 @@ class CountdownBot(CQHttp):
             self.config.SECRET
         )
         self.client = ClientWrapper(self.api_client.invoke)
-        self.client_async = ClientWrapper(self.api_client.invoke_async)
+        self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(self.api_client.invoke_async(x, y), self.loop))
 
     @property
     def logger(self) -> logging.Logger:
@@ -296,7 +296,7 @@ class CountdownBot(CQHttp):
         self.logger.info(
             f"{commands_count} group commands, {len(self.command_manager.console_commands)} console commands, {len(self.plugins)} plugins, {listeners_count} listeners, {len(self.state_manager.state_callers)} states")
         # self.on_message()(self.message_handler)
-        
+
         self.loop_thread = Thread(
             target=lambda: self.loop.run_forever())
         self.input_thread = Thread(target=self.input_handler)
