@@ -35,9 +35,11 @@ class AsyncHTTPAPIClient:
                 # print(resp.request_info.headers)
                 resp: aiohttp.ClientResponse
                 if resp.status == 401:
-                    raise InvalidAccessTokenException(f"Empty access token: {self.access_token}")
+                    raise InvalidAccessTokenException(
+                        f"Empty access token: {self.access_token}")
                 elif resp.status == 403:
-                    raise InvalidAccessTokenException(f"Bad access token: {self.access_token}")
+                    raise InvalidAccessTokenException(
+                        f"Bad access token: {self.access_token}")
                 json_resp = await resp.json(encoding="utf-8")
                 if json_resp["status"] == "failed":
                     code = json_resp["retcode"]
