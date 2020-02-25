@@ -31,14 +31,14 @@ class GeoQueryPlugin(Plugin):
 
             target = (result["pois"][0])
             lon, lat = target["location"].split(",")
-            self.bot.send(
+            await self.bot.client_async.send(
                 context, f'[CQ:location,lat={lat},lon={lon},content={target["address"]},title={target["name"]}]')
             from io import StringIO
             buf = StringIO()
             for item in result["pois"][:5]:
                 buf.write(
                     f'ID: {item["id"]} | 名称: {item["name"]} | 地址: {item["address"]} | 类型: {item["type"]}\n')
-            self.bot.send(context, buf.getvalue())
+            await self.bot.client_async.send(context, buf.getvalue())
 
     async def where_id(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         spot_id = " ".join(args).strip()
@@ -49,15 +49,15 @@ class GeoQueryPlugin(Plugin):
             result = await urlf.json(encoding="utf-8")
             # print(result)
             if result["status"] != "1":
-                self.bot.send(context, result["info"])
+                await self.bot.client_async.send(context, result["info"])
                 return
             # print(result["pois"])
             if len(result["pois"]) == 0:
-                self.bot.send(context, "搜索无结果")
+                await self.bot.client_async.send(context, "搜索无结果")
                 return
             target = (result["pois"][0])
             lon, lat = target["location"].split(",")
-            self.bot.send(
+            await self.bot.client_async.send(
                 context, f'[CQ:location,lat={lat},lon={lon},content={target["address"]},title={target["name"]}]')
 
     def on_enable(self):

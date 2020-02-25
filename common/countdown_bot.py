@@ -13,6 +13,9 @@ from common.loop import ScheduleLoopManager
 from common.utils import stop_thread
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
+from .api_client.api import ClientWrapper
+from .api_client.async_api_client import AsyncHTTPAPIClient
+
 import sys
 import os
 import importlib
@@ -67,6 +70,14 @@ class CountdownBot(CQHttp):
         self.thread_pool = ThreadPoolExecutor(
             max_workers=self.config.MAX_THREAD_EXECUTORS
         )
+        self.api_client = AsyncHTTPAPIClient(
+            self.loop,
+            self.config.API_URL,
+            self.config.ACCESS_TOKEN,
+            self.config.SECRET
+        )
+        self.client = ClientWrapper(self.api_client.invoke)
+        self.client_async = ClientWrapper(self.api_client.invoke_async)
 
     @property
     def logger(self) -> logging.Logger:
