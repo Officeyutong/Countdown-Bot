@@ -32,6 +32,7 @@ class AsyncHTTPAPIClient:
         """
         async def wrapper():
             async with self.client.post(urllib.parse.urljoin(self.server_url, api_name), json=data) as resp:
+                print(resp.request_info.headers)
                 resp: aiohttp.ClientResponse
                 if resp.status == 401:
                     raise InvalidAccessTokenException(f"Empty access token: {self.access_token}")
