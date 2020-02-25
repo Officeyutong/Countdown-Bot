@@ -69,7 +69,7 @@ class WeatherPlugin(Plugin):
             if index >= 2:
                 break
             message.write('\n')
-        self.bot.send(context, message.getvalue())
+        self.bot.client_async.send(context, message.getvalue())
 
     def on_enable(self):
         self.aioclient = aiohttp.ClientSession()

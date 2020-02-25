@@ -54,9 +54,9 @@ class HitokotoPlugin(Plugin):
     def command_hitokoto(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
         async def wrapper():
             if len(args) == 0:
-                self.bot.send(context, await self.fetch_random_hitokoto())
+                self.bot.client_async.send(context, await self.fetch_random_hitokoto())
             else:
-                self.bot.send(context, await self.fetch_hitokoto_by_id(args[0]))
+                self.bot.client_async.send(context, await self.fetch_hitokoto_by_id(args[0]))
         self.bot.submit_async_task(wrapper())
 
     async def schedule_loop(self):
@@ -67,7 +67,7 @@ class HitokotoPlugin(Plugin):
             broadcast_list = self.config.HITOKOTO_BROADCAST_LOCAL_LIST
         for group in broadcast_list:
             try:
-                self.bot.send_group_msg(group_id=int(group), message=await self.fetch_random_hitokoto())
+                self.bot.client_async.send_group_msg(group_id=int(group), message=await self.fetch_random_hitokoto())
             except:
                 import traceback
                 traceback.print_exc()
