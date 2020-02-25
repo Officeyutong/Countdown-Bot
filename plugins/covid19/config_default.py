@@ -1,1 +1,0 @@
-PHANTOMJS_PATH = "phantomjs"
