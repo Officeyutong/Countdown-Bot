@@ -75,8 +75,8 @@ class Music163Plugin(Plugin):
             return result["result"]["songs"]
 
     async def command_music(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
-        while not args[-1]:
-            del args[-1]
+        # while not args[-1]:
+        #     del args[-1]
         raw = False
         link = False
         if args[-1] == "raw":
