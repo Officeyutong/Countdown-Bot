@@ -23,19 +23,19 @@ def help(bot: CQHttp, context=None, args=None):
         map(lambda x: x[0]+" --- "+x[1][0], sorted(commands.items(), key=lambda x: x[0]))))
 
 
-@command(name="status", help="查看Bot运行状态")
-def show_status(bot: CQHttp, context, args):
-    to_send =\
-        """倒计时广播时间: {broadcast_hour:0>2d}:{broadcast_minute:0>2d}
-Hitokoto广播时间: {hitokoto_hour:0>2d}:{hitokoto_minute:0>2d}
-指令前缀: {command_prefix}
-输入 [指令前缀]help 查看帮助""".format(
-            broadcast_hour=CONFIG["plugins.broadcast.broadcast"].BROADCAST_HOUR, broadcast_minute=CONFIG["plugins.broadcast.broadcast"].BROADCAST_MINUTE,
-            hitokoto_hour=CONFIG["plugins.hitokoto.hitokoto"].HITOKOTO_HOUR, hitokoto_minute=CONFIG["plugins.hitokoto.hitokoto"].HITOKOTO_MINUTE,
-            command_prefix="".join(
-                map(lambda x: x+" ", global_config.COMMAND_PREFIX)),
-        )
-    bot.send(context, to_send)
+# @command(name="status", help="查看Bot运行状态")
+# def show_status(bot: CQHttp, context, args):
+#     to_send =\
+#         """倒计时广播时间: {broadcast_hour:0>2d}:{broadcast_minute:0>2d}
+# Hitokoto广播时间: {hitokoto_hour:0>2d}:{hitokoto_minute:0>2d}
+# 指令前缀: {command_prefix}
+# 输入 [指令前缀]help 查看帮助""".format(
+#             broadcast_hour=CONFIG["plugins.broadcast.broadcast"].BROADCAST_HOUR, broadcast_minute=CONFIG["plugins.broadcast.broadcast"].BROADCAST_MINUTE,
+#             hitokoto_hour=CONFIG["plugins.hitokoto.hitokoto"].HITOKOTO_HOUR, hitokoto_minute=CONFIG["plugins.hitokoto.hitokoto"].HITOKOTO_MINUTE,
+#             command_prefix="".join(
+#                 map(lambda x: x+" ", global_config.COMMAND_PREFIX)),
+#         )
+#     bot.send(context, to_send)
 
 
 @command(name="plugins", help="查看插件列表")
