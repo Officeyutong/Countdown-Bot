@@ -45,5 +45,5 @@ class ClientWrapper:
         }
         return self.send_msg(message=message,
                              auto_escape=auto_escape,
-                             **{mapping[message_type]: context[message_type]}
+                             **{mapping[message_type]: context[mapping[message_type]]}
                              )
