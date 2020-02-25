@@ -44,6 +44,7 @@ class AsyncHTTPAPIClient:
                         f"HTTP API returned {code}, see https://cqhttp.cc/docs for details")
                 else:
                     return json_resp["data"]
+        print("invoking", locals())
         future = asyncio.run_coroutine_threadsafe(wrapper(), self.loop)
         if not wait_to_finish:
             return future
