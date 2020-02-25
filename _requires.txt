@@ -1,0 +1,5 @@
+snapshot-phantomjs
+pyecharts
+echarts-cities-pypkg
+echarts-china-cities-pypkg
+echarts-china-provinces-pypkg

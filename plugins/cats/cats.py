@@ -143,11 +143,11 @@ def upload_cats(bot: CQHttp, context, args):
     threading.Thread(target=upload_image).start()
 
 
-def load_data()->dict:
+def load_data() -> dict:
     print_log(__file__)
     import os
     print_log(os.sys.path)
-    config_path = os.path.join(os.path.dirname(__file__),"cats.json")
+    config_path = os.path.join(os.path.dirname(__file__), "cats.json")
     if not os.path.exists(config_path):
         with open(config_path, "w") as file:
             file.write("{}")
@@ -159,5 +159,5 @@ def load_data()->dict:
 
 def save_data(obj: dict):
     import os
-    with open(os.path.join(os.path.dirname(__file__),"cats.json"), "w") as file:
+    with open(os.path.join(os.path.dirname(__file__), "cats.json"), "w") as file:
         json.dump(obj, file)

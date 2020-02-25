@@ -29,6 +29,7 @@ class Music163Plugin(Plugin):
                 "password": self.config.PASSWORD
             }) as resp:
                 result = await resp.json()
+                self.bot.logger.debug(f"Login response: {result}")
             return result["code"] == 200
         elif self.config.LOGIN_MODE == "email":
             async with self.aioclient.get(f"{self.config.API_URL}/login", params={
@@ -36,6 +37,7 @@ class Music163Plugin(Plugin):
                 "password": self.config.PASSWORD
             }) as resp:
                 result = await resp.json()
+                self.bot.logger.debug(f"Login response: {result}")
             return result["code"] == 200
         else:
             return False
@@ -45,6 +47,7 @@ class Music163Plugin(Plugin):
             return True
         async with self.aioclient.get(f"{self.config.API_URL}/login/refresh") as resp:
             result = await resp.json()
+            self.bot.logger.debug(f"")
         return result["code"] == 200
 
     async def check_music_available(self, music_id: int) -> bool:

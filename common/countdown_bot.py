@@ -25,6 +25,7 @@ import logging
 import datetime
 import sys
 import io
+import sqlite3
 
 
 class CountdownBotConfig(ConfigBase):
@@ -78,7 +79,8 @@ class CountdownBot(CQHttp):
             self.config.SECRET
         )
         self.client = ClientWrapper(self.api_client.invoke)
-        self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(self.api_client.invoke_async(x, y), loop=self.loop))
+        self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(
+            self.api_client.invoke_async(x, y), loop=self.loop))
 
     @property
     def logger(self) -> logging.Logger:
@@ -162,7 +164,7 @@ class CountdownBot(CQHttp):
 
     def __discuss_message_handler(self, context: dict) -> dict:
         evt = event.DiscussMessageEvent(context)
-        
+
         # self.logger.info(f"Processing message event - discuss_id: {evt.discuss_id} user_id: {evt.user_id}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"discuss:{evt.discuss_id}", current_chat_type=ChatType.discuss
@@ -281,8 +283,9 @@ class CountdownBot(CQHttp):
         - 加载插件并调用on_enable函数
         - 注册内置命令,初始化内部事件监听器(用以处理基础事件)
         - 初始化协程池
-
+        - 连接数据库
         """
+        self.db_conn = sqlite3.connect("data.db")
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
         self.__load_plugins()
@@ -438,9 +441,11 @@ class CountdownBot(CQHttp):
         停止CountdownBot
         """
         self.logger.info("Shutting down..")
+        
         for plugin in self.plugins:
             self.logger.info(f"Disabling {plugin.plugin_id}")
             plugin.on_disable()
+        self.db_conn.close()
         self.loop.call_soon_threadsafe(self.loop.stop)
         stop_thread(self.input_thread)
         os.kill(os.getpid(), 1)
