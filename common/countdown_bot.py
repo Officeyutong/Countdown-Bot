@@ -70,6 +70,7 @@ class CountdownBot(CQHttp):
         self.thread_pool = ThreadPoolExecutor(
             max_workers=self.config.MAX_THREAD_EXECUTORS
         )
+        self.loop = asyncio.get_event_loop()
         self.api_client = AsyncHTTPAPIClient(
             self.loop,
             self.config.API_URL,
@@ -295,7 +296,7 @@ class CountdownBot(CQHttp):
         self.logger.info(
             f"{commands_count} group commands, {len(self.command_manager.console_commands)} console commands, {len(self.plugins)} plugins, {listeners_count} listeners, {len(self.state_manager.state_callers)} states")
         # self.on_message()(self.message_handler)
-        self.loop = asyncio.get_event_loop()
+        
         self.loop_thread = Thread(
             target=lambda: self.loop.run_forever())
         self.input_thread = Thread(target=self.input_handler)
