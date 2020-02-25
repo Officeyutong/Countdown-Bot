@@ -11,7 +11,7 @@ class AsyncHTTPAPIClient:
     def __init__(self, loop: asyncio.AbstractEventLoop, server_url: str, access_token: str = "", secret: str = ""):
         self.loop = loop
         self.client = aiohttp.ClientSession(headers={
-            "Authorization": f"Bearer {access_token}"
+            "Authorization": f"Token {access_token}"
         })
         self.server_url = server_url
         self.access_token = access_token
