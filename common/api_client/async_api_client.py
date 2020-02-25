@@ -34,9 +34,9 @@ class AsyncHTTPAPIClient:
             async with self.client.post(urllib.parse.urljoin(self.server_url, api_name), json=data) as resp:
                 resp: aiohttp.ClientResponse
                 if resp.status == 401:
-                    raise InvalidAccessTokenException("Empty access token")
+                    raise InvalidAccessTokenException(f"Empty access token: {self.access_token}")
                 elif resp.status == 403:
-                    raise InvalidAccessTokenException("Bad access token")
+                    raise InvalidAccessTokenException(f"Bad access token: {self.access_token}")
                 json_resp = await resp.json(encoding="utf-8")
                 if json_resp["status"] == "failed":
                     code = json_resp["retcode"]
