@@ -84,7 +84,8 @@ class Music163Plugin(Plugin):
             del args[-1]
 
         if not await self.check_login_status():
-            if not await self.login():
+            await self.login()
+            if not await self.check_login_status():
                 await self.bot.client_async.send("网易云账号登陆失败！")
 
         if args[0] == "id":
