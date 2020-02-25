@@ -32,7 +32,7 @@ class AsyncHTTPAPIClient:
         """
         async def wrapper():
             async with self.client.post(urllib.parse.urljoin(self.server_url, api_name), json=data) as resp:
-                print(resp.request_info.headers)
+                # print(resp.request_info.headers)
                 resp: aiohttp.ClientResponse
                 if resp.status == 401:
                     raise InvalidAccessTokenException(f"Empty access token: {self.access_token}")
@@ -45,7 +45,7 @@ class AsyncHTTPAPIClient:
                         f"HTTP API returned {code}, see https://cqhttp.cc/docs for details")
                 else:
                     return json_resp["data"]
-        print("invoking", locals())
+        # print("invoking", locals())
         future = asyncio.run_coroutine_threadsafe(wrapper(), self.loop)
         if not wait_to_finish:
             return future

@@ -44,6 +44,7 @@ class ClientWrapper:
             "discuss": ("discuss_id"),
             "group": ("group_id")
         }
+        print(context)
         return self.send_msg(message=message,
                              auto_escape=auto_escape,
                              **{mapping[message_type]: context[mapping[message_type]]}
