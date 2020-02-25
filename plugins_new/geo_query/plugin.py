@@ -90,5 +90,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "geo_query", 2.0, "高德地图API查询"
+        "officeyutong", 2.0, "高德地图API查询"
     )

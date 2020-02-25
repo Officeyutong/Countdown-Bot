@@ -56,5 +56,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "simple_rand", 2.0, "简单随机数产生器"
+        "officeyutong", 2.0, "简单随机数产生器"
     )

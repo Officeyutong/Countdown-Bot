@@ -102,5 +102,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "hitokoto", 2.0, "一言广播 & 查询"
+        "officeyutong", 2.0, "一言广播 & 查询"
     )

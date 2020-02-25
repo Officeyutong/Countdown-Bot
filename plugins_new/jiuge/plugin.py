@@ -181,7 +181,7 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "jiuge", 2.0, "九歌(http://jiuge.thunlp.cn/)爬虫"
+        "officeyutong", 2.0, "九歌(http://jiuge.thunlp.cn/)爬虫"
     )
 
 

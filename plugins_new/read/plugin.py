@@ -73,5 +73,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "read", 2.0, "文字转语音"
+        "Antares", 2.0, "文字转语音"
     )

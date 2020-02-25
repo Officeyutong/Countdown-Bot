@@ -89,5 +89,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "fun", 2.0, "包括复读机以及一些有意思的小指令"
+        "officeyutong", 2.0, "包括复读机以及一些有意思的小指令"
     )

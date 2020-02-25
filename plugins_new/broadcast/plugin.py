@@ -117,5 +117,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "broadcast", 2.0, "群广播"
+        "officeyutong", 2.0, "群广播"
     )

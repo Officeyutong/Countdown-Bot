@@ -162,7 +162,8 @@ class CountdownBot(CQHttp):
 
     def __discuss_message_handler(self, context: dict) -> dict:
         evt = event.DiscussMessageEvent(context)
-
+        
+        # self.logger.info(f"Processing message event - discuss_id: {evt.discuss_id} user_id: {evt.user_id}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"discuss:{evt.discuss_id}", current_chat_type=ChatType.discuss
         ):

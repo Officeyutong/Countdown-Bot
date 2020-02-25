@@ -95,5 +95,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "weather", 2.0, "天气查询"
+        "Antares", 2.0, "天气查询"
     )

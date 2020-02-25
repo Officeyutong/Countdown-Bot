@@ -9,6 +9,11 @@ class ChatType(Enum):
     group = "group"
     private = "private"
     discuss = "discuss"
+    @staticmethod
+    def all():
+        return {
+            ChatType.group, ChatType.private, ChatType.discuss
+        }
 
 
 class Command:
@@ -33,7 +38,7 @@ class Command:
         self.available_chats = available_chats
         self.is_async = is_async
 
-    def invoke(self, args: List[str], raw_string: str, context: dict = None, event: MessageEvent = None, bot = None):
+    def invoke(self, args: List[str], raw_string: str, context: dict = None, event: MessageEvent = None, bot=None):
         if self.is_async:
             bot.submit_async_task(self.handler(
                 self.plugin, args, raw_string, context, event))
