@@ -147,7 +147,7 @@ class JiugePlugin(Plugin):
         # async def wrapper():
         try:
             await asyncio.wait_for(handle(), timeout=self.config.TIME_LIMIT)
-        except asyncio.exceptions.TimeoutError as err:
+        except asyncio.exceptions.TimeoutError:
             await self.bot.client_async.send(context, f"{user_id} 生成超时")
 
         # self.bot.submit_async_task(wrapper())

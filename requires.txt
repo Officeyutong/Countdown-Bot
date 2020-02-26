@@ -18,3 +18,4 @@ jieba
 aiohttp
 aiofiles
 ujson
+graphviz

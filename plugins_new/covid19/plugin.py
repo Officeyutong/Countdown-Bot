@@ -28,7 +28,7 @@ class COVID19QueryPlugin(Plugin):
         self.register_command_wrapped(
             command_name="covid19",
             command_handler=self.command_covi19_query,
-            help_string="查询国内 COVID19 疫情 | coivd19 [省份]",
+            help_string="查询国内 COVID19 疫情 | covid19 [省份]",
             chats=ChatType.all(),
             is_async=True
         )
