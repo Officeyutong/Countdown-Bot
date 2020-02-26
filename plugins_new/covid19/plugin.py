@@ -48,19 +48,22 @@ class COVID19QueryPlugin(Plugin):
         update_time: time.struct_time = time.localtime(
             statistics["modifyTime"]//1000)
 
-        def make_increase_string(val: int):
+        def make_increase_string(key: str):
+            if key not in statistics:
+                return ""
+            val = statisticsd[key]
             if val == 0:
-                return str(val)
+                return f"{str(val)}"
             elif val < 0:
-                return str(val)
+                return f"{str(val)}"
             else:
-                return f"+{val}"
-        broadcast = f"{statistics['confirmedCount']} 累计确诊({make_increase_string(statistics['confirmedIncr'])}) |\
- {statistics['currentConfirmedCount']} 当前确诊({make_increase_string(statistics['currentConfirmedIncr'])}) |\
- {statistics['suspectedCount']} 疑似({make_increase_string(statistics['suspectedIncr'])}) |\
- {statistics['curedCount']} 治愈({make_increase_string(statistics['curedIncr'])}) |\
- {statistics['seriousCount']} 重症({make_increase_string(statistics['seriousIncr'])}) |\
- {statistics['deadCount']} 死亡({make_increase_string(statistics['deadIncr'])})\n\
+                return f"(+{val})"
+        broadcast = f"{statistics['confirmedCount']} 累计确诊{make_increase_string('confirmedIncr')} |\
+ {statistics['currentConfirmedCount']} 当前确诊{make_increase_string('currentConfirmedIncr')} |\
+ {statistics['suspectedCount']} 疑似{make_increase_string('suspectedIncr')} |\
+ {statistics['curedCount']} 治愈{make_increase_string('curedIncr')} |\
+ {statistics['seriousCount']} 重症{make_increase_string('seriousIncr')} |\
+ {statistics['deadCount']} 死亡{make_increase_string('deadIncr')}\n\
 更新于{time.strftime('%Y.%m.%d %H:%M:%S', update_time)}"
         from io import StringIO
         buf = StringIO()
