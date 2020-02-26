@@ -18,4 +18,5 @@ jieba
 aiohttp
 aiofiles
 ujson
+dnspython
 graphviz
