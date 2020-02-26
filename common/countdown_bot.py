@@ -339,7 +339,7 @@ class CountdownBot(CQHttp):
             command_name="help",
             handler=self.__help_command,
             plugin=None,
-            help_string="查看帮助 | help all 查看所有指令的帮助",
+            help_string="查看帮助 | help [插件ID(可选)]",
             available_chats={ChatType.discuss,
                              ChatType.private, ChatType.group},
             alias=["帮助"],
@@ -494,10 +494,18 @@ class CountdownBot(CQHttp):
         buf = StringIO()
         command_list: List[Command] = []
         chat_type = ChatType(context["message_type"])
-        for value in self.command_manager.commands.values():
-            for item in value.values():
-                if chat_type in item.available_chats or (args and args[0] == 'all'):
-                    command_list.append(item)
+        if not args:
+            for value in self.command_manager.commands.values():
+                for item in value.values():
+                    if chat_type in item.available_chats:
+                        command_list.append(item)
+        else:
+            if args[0] in self.command_manager.commands:
+                for item in self.command_manager.commands[args[0]].values():
+                    if chat_type in item.available_chats:
+                        command_list.append(item)
+            else:
+                self.client.send(context, "此插件未注册指令")
         command_list.sort(key=lambda x: x.command_name)
         for cmd in command_list:
             buf.write(
