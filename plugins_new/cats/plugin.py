@@ -47,13 +47,23 @@ class CatsPlugin(Plugin):
         if not ids:
             self.bot.client.send(context, "当前无人上传过猫片!")
             return
-        selected = random.choice(ids)
-        if args:
-            selected = int(args[0])
-        image = self.conn.execute(
-            "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (selected,)).fetchone()
+        args = {
+            "qq": None,
+            "id": random.choice(ids)
+        }
+        for x in args:
+            a, *b = x.split(":")
+            if a in args and b:
+                args[a] = b
+        if args["qq"]:
+            image = self.conn.execute(
+                "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE USER_ID = ?", (int(args["qq"]),)).fetchone()
+        else:
+            image = self.conn.execute(
+                "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (int(args["id"]),)).fetchone()
+
         if not image:
-            self.bot.client.send(context, "猫片ID不存在")
+            self.bot.client.send(context, "猫片不存在")
             return
         upload_time: time.struct_time = time.localtime(image[2])
         b64_encoded = base64.encodebytes(image[3]).decode().replace("\n", "")
