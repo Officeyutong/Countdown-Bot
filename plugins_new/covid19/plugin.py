@@ -52,10 +52,8 @@ class COVID19QueryPlugin(Plugin):
             if key not in statistics:
                 return ""
             val = statistics[key]
-            if val == 0:
-                return f"{str(val)}"
-            elif val < 0:
-                return f"{str(val)}"
+            if val <= 0:
+                return f"({str(val)})"
             else:
                 return f"(+{val})"
         broadcast = f"{statistics['confirmedCount']} 累计确诊{make_increase_string('confirmedIncr')} |\
