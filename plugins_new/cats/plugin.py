@@ -43,25 +43,35 @@ class CatsPlugin(Plugin):
         self.__id_cache = id_cache
 
     def get_cat_image(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        ids = [x[0] for x in self.conn.execute("SELECT ID FROM CATS ")]
-        if not ids:
+
+        if not self.conn.execute("SELECT COUNT(*) FROM CATS"):
             self.bot.client.send(context, "当前无人上传过猫片!")
             return
-        args = {
+        _args = {
             "qq": None,
-            "id": random.choice(ids)
+            "id": -1
         }
         for x in args:
             a, *b = x.split(":")
-            if a in args and b:
-                args[a] = b
+            self.logger.debug(a)
+            self.logger.debug(b)
+            if a in _args and b:
+                _args[a] = b[0]
+        self.logger.info(_args)
+        args = _args
         if args["qq"]:
-            image = self.conn.execute(
-                "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE USER_ID = ?", (int(args["qq"]),)).fetchone()
+            ids = [x[0] for x in self.conn.execute(
+                "SELECT ID FROM CATS WHERE USER_ID = ? ", (int(args["qq"]),))]
+        elif args["id"] != -1:
+            ids = [int(args["id"])]
         else:
-            image = self.conn.execute(
-                "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (int(args["id"]),)).fetchone()
+            ids = [x[0] for x in self.conn.execute("SELECT ID FROM CATS")]
+        if not ids:
+            self.bot.client.send(context, "猫片不存在")
+            return
 
+        image = self.conn.execute(
+            "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (random.choice(ids),)).fetchone()
         if not image:
             self.bot.client.send(context, "猫片不存在")
             return
@@ -105,17 +115,24 @@ class CatsPlugin(Plugin):
         self.client = aiohttp.ClientSession()
         self.upload_pattern = re.compile(
             r"\[CQ:image.+url\=(?P<url>[^\[^\]]+)\]")
-        self.conn.execute("""CREATE TABLE IF NOT EXISTS CATS(
-            ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            USER_ID INTEGER NOT NULL,
-            UPLOAD_TIME INTEGER,
-            DATA BLOB NOT NULL
-        )""")
-        self.conn.commit()
+
+        try:
+            self.conn.execute("""CREATE TABLE IF NOT EXISTS CATS(
+                ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                USER_ID INTEGER NOT NULL,
+                UPLOAD_TIME INTEGER,
+                DATA BLOB NOT NULL
+            )""")
+            self.conn.execute("CREATE INDEX ID_INDEX ON CATS(ID)")
+            self.conn.execute("CREATE INDEX USER_ID_INDEX ON CATS(USER_ID)")
+            self.conn.commit()
+        except Exception as ex:
+            self.logger.error(ex)
+
         self.register_command_wrapped(
             command_name="吸猫",
             command_handler=self.get_cat_image,
-            help_string="吸猫 | 吸猫 [猫片ID(可选)]",
+            help_string="吸猫 | 吸猫 [qq:上传者ID(可选)] [id:图片ID(可选)]",
             chats={ChatType.group},
             alias=["cat"],
         )
