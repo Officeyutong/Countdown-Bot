@@ -51,7 +51,7 @@ class COVID19QueryPlugin(Plugin):
         def make_increase_string(key: str):
             if key not in statistics:
                 return ""
-            val = statisticsd[key]
+            val = statistics[key]
             if val == 0:
                 return f"{str(val)}"
             elif val < 0:
