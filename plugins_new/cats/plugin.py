@@ -99,6 +99,9 @@ class CatsPlugin(Plugin):
             async with self.client.get(url) as resp:
                 resp: aiohttp.ClientResponse
                 image_data = await resp.read()
+                if len(image_data) > self.config.IMAGE_SIZE_LIMIT:
+                    await self.bot.client_async.send(context, "图片过大")
+                    return
             ret = self.conn.execute("INSERT INTO CATS (USER_ID,UPLOAD_TIME,DATA) VALUES (?,?,?)", (
                 evt.sender.user_id,
                 int(time.time()),
