@@ -29,7 +29,6 @@ class Music163Plugin(Plugin):
                 "password": self.config.PASSWORD
             }) as resp:
                 result = await resp.json()
-                self.bot.logger.debug(f"Login response: {result}")
             return result["code"] == 200
         elif self.config.LOGIN_MODE == "email":
             async with self.aioclient.get(f"{self.config.API_URL}/login", params={
@@ -37,7 +36,6 @@ class Music163Plugin(Plugin):
                 "password": self.config.PASSWORD
             }) as resp:
                 result = await resp.json()
-                self.bot.logger.debug(f"Login response: {result}")
             return result["code"] == 200
         else:
             return False
@@ -47,7 +45,6 @@ class Music163Plugin(Plugin):
             return True
         async with self.aioclient.get(f"{self.config.API_URL}/login/refresh") as resp:
             result = await resp.json()
-            self.bot.logger.debug(f"")
         return result["code"] == 200
 
     async def check_music_available(self, music_id: int) -> bool:
@@ -75,8 +72,10 @@ class Music163Plugin(Plugin):
             return result["result"]["songs"]
 
     async def command_music(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
-        # while not args[-1]:
-        #     del args[-1]
+        if len(args) == 0:
+            await self.bot.client_async.send(context, "输入不合法")
+            return
+        
         raw = False
         link = False
         if args[-1] == "raw":
@@ -86,9 +85,13 @@ class Music163Plugin(Plugin):
             link = True
             del args[-1]
 
+        if len(args) == 0:
+            await self.bot.client_async.send(context, "输入不合法")
+            return
+
         if not await self.check_login_status():
             if not await self.login():
-                await self.bot.client_async.send(context, "网易云账号登陆失败！")
+                await self.bot.client_async.send(context, "网易云账号登陆失败, 请检查账号密码！")
             elif not await self.check_login_status():
                 await self.bot.client_async.send(context, "网易云账号登陆失败！")
 
