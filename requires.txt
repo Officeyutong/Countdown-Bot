@@ -19,3 +19,4 @@ aiohttp
 aiofiles
 ujson
 dnspython
+graphviz
