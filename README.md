@@ -2,28 +2,26 @@
 
 #### 项目介绍
 
-QQ群倒计时bot.
+QQ群多功能Bot。
+
 
 
 #### 安装教程
 
 前置需求:
 
-- Coolq
-- Python3.5+
-- cqhttp (使用pip安装)
-- docker (Python的docker客户端，用pip安装)
-- texlive pyglet dvipng (如果需要渲染Latex)
+- Coolq + HTTPAPI
+- Python3.8
+- requires.txt里的各种库
 
 #### 使用说明
 
-- 复制config_default.py为config.py,并作出相应修改
-- 使用python运行main.py
-- 在群里输入--help查看帮助
+- 安装requires.txt里的依赖
+- HTTPAPI以HTTP形式上报数据
+- 参考common.countdown_bot.CountdownBotConfig类在Bot根目录下写自己的配置文件(config.py，使用全局常量来覆盖默认配置)
 
 
 #### 注意
 - 如果要使用运行Python代码的功能，则系统必须要安装有docker，并且已经安装好了"python"镜像
-- 要渲染Latex，则必须安装sympy,pyglet,dvipng,texlive
-- 要支持积分，必须安装sympy
 - 如果要使用music_gen插件，则必须安装ffmpeg和sox
+- 插件可以自由删除，删除任何一个插件都不会影响其他插件运行
