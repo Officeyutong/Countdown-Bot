@@ -52,6 +52,9 @@ class CatsPlugin(Plugin):
             selected = int(args[0])
         image = self.conn.execute(
             "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (selected,)).fetchone()
+        if not image:
+            self.bot.client.send(context, "猫片ID不存在")
+            return
         upload_time: time.struct_time = time.localtime(image[2])
         b64_encoded = base64.encodebytes(image[3]).decode().replace("\n", "")
         self.bot.client_async.send(context,
