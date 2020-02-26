@@ -91,7 +91,7 @@ class DNSPlugin(Plugin):
             command_name="dns",
             command_handler=self.command_dns,
             help_string="DNS查询 | dns [host] [A/MX/NS/CNAME](可选)",
-            chats=ChatType.all(),
+            chats=ChatType.all()
         )
 
 
