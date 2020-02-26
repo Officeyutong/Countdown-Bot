@@ -46,11 +46,11 @@ class DNSPlugin(Plugin):
 
     def query(self, domain: str, query_mode: str) -> List[str]:
         if query_mode == 'A':
-            return A_query(domain)
+            return self.A_query(domain)
         elif query_mode == 'MX':
-            return MX_query(domain)
+            return self.MX_query(domain)
         else:
-            return BASE_query(domain, query_mode)
+            return self.BASE_query(domain, query_mode)
 
     def command_dns(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
         def wrapper():
@@ -58,7 +58,7 @@ class DNSPlugin(Plugin):
                 self.bot.client_async.send(context, "请输入正确的域名")
                 return
 
-            mode_list = set("A", "MX", "NS", "CNAME")
+            mode_list = {"A", "MX", "NS", "CNAME"}
 
             if len(args) > 1:
                 if not args[1] in mode_list:
@@ -69,7 +69,7 @@ class DNSPlugin(Plugin):
                 buf.write(f"查询域名:{args[0]}\n")
                 buf.write(f"查询模式:{args[1]}\n")
                 buf.write("查询结果:\n")
-                result = query(args[0], args[1])
+                result = self.query(args[0], args[1])
                 for item in result:
                     buf.write(f"{item}\n")
                 self.bot.client_async.send(context, buf.getvalue())
@@ -78,7 +78,7 @@ class DNSPlugin(Plugin):
                 buf.write(f"查询域名:{args[0]}\n查询结果:\n")
                 for opt in mode_list:
                     buf.write(f"{opt}:\n")
-                    result = query(args[0], opt)
+                    result = self.query(args[0], opt)
                     for item in result:
                         buf.write(f"{item}\n")
                     buf.write("\n")
