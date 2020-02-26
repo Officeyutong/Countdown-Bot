@@ -152,7 +152,7 @@ class CatsPlugin(Plugin):
             command_name="吸猫",
             command_handler=self.get_cat_image,
             help_string="吸猫 | 吸猫 [qq:上传者ID(可选)] [id:图片ID(可选)]",
-            chats={ChatType.group},
+            chats=ChatType.all(),
             alias=["cat"],
         )
         self.register_command_wrapped(
