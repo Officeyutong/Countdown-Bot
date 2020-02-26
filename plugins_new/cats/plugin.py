@@ -48,6 +48,8 @@ class CatsPlugin(Plugin):
             self.bot.client.send(context, "当前无人上传过猫片!")
             return
         selected = random.choice(ids)
+        if args:
+            selected = int(args[0])
         image = self.conn.execute(
             "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (selected,)).fetchone()
         upload_time: time.struct_time = time.localtime(image[2])
