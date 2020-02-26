@@ -15,6 +15,7 @@ import datetime
 import random
 import time
 import base64
+import sqlite3
 
 
 class CatsConfig(ConfigBase):
@@ -127,10 +128,15 @@ class CatsPlugin(Plugin):
             await self.bot.client_async.send(context, f"{evt.sender.user_id} 的猫猫图片 {ret.lastrowid} 上传成功")
         self.bot.submit_async_task(wrapper())
 
+    def on_disable(self):
+        self.logger.info(f"Cats: closing database..")
+        self.conn.close()
+
     def on_enable(self):
         self.bot: CountdownBot
         self.config: CatsConfig
-        self.conn = self.bot.db_conn
+        self.conn = sqlite3.connect(
+            self.plugin_base_dir/"cats.db", check_same_thread=False)
         self.client = aiohttp.ClientSession()
         self.upload_pattern = re.compile(
             r"\[CQ:image.+url\=(?P<url>[^\[^\]]+)\]")
