@@ -42,6 +42,22 @@ class CatsPlugin(Plugin):
             id_cache.append(image_id[0])
         self.__id_cache = id_cache
 
+    def delete_cat_image(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if not args:
+            self.bot.client.send(context, "请输入猫片ID")
+            return
+        line = self.conn.execute(
+            "SELECT ID,USER_ID,UPLOAD_TIME,DATA FROM CATS WHERE ID = ?", (int(args[0]),)).fetchone()
+        if not line:
+            self.bot.client.send(context, "猫片不存在")
+            return
+        if line[1] != evt.sender.user_id:
+            self.bot.client.send(context, "您只能删除自己上传的猫片")
+            return
+        self.conn.execute("DELETE FROM CATS WHERE ID = ?", (line[0],))
+        self.conn.commit()
+        self.bot.client.send(context, "删除完成")
+
     def get_cat_image(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
 
         if not self.conn.execute("SELECT COUNT(*) FROM CATS"):
@@ -150,6 +166,12 @@ class CatsPlugin(Plugin):
             command_handler=self.list_cats,
             help_string="查看上传过猫片的用户列表 | 查询某个用户上传的猫片 list-cats [QQ]",
             chats=ChatType.all(),
+        )
+        self.register_command_wrapped(
+            command_name="delete-cat",
+            command_handler=self.delete_cat_image,
+            help_string="删除猫片 | delete-cat [id]",
+            chats={ChatType.group},
         )
 
 
