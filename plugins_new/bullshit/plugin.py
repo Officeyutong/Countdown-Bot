@@ -37,6 +37,7 @@ class BullshitPlugin(Plugin):
 
         if not args:
             self.bot.client.send(context, "请输入主题")
+            return
         theme = " ".join(args)
         self.bot.client.send(context, self.generate_bullshit(theme))
 

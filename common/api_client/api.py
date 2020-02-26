@@ -1,5 +1,6 @@
-from typing import Callable, Union
+from typing import Callable, Union, Literal
 from concurrent.futures import Future
+from .datatypes import *
 
 
 class ClientWrapper:
@@ -50,3 +51,9 @@ class ClientWrapper:
                              message_type=message_type,
                              **{mapping[message_type]: context[mapping[message_type]]}
                              )
+
+    def get_stranger_info(self, user_id: int, no_cache: bool = False):
+        local_vars = locals()
+        # del local_vars["self"]
+        del local_vars["self"]
+        return self.invoker("get_stranger_info", local_vars)

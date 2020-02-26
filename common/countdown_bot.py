@@ -107,7 +107,7 @@ class CountdownBot(CQHttp):
         for prefix in self.config.COMMAND_PREFIX:
             if evt.raw_message.startswith(prefix):
                 done = True
-                splited = evt.raw_message[len(prefix):].split()
+                splited = evt.message[len(prefix):].split()
                 command_name = splited[0]
                 self.logger.info(f"Executing command: {splited[0]}")
 
