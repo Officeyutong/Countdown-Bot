@@ -144,13 +144,13 @@ class JiugePlugin(Plugin):
                 await self.bot.client_async.send(context, str(ex))
                 raise ex
 
-        async def wrapper():
-            try:
-                await asyncio.wait_for(handle(), timeout=self.config.TIME_LIMIT)
-            except TimeoutError:
-                await self.bot.client_async.send_msg(context, f"{user_id} 生成超时")
+        # async def wrapper():
+        try:
+            await asyncio.wait_for(handle(), timeout=self.config.TIME_LIMIT)
+        except asyncio.exceptions.TimeoutError as err:
+            await self.bot.client_async.send(context, f"{user_id} 生成超时")
 
-        self.bot.submit_async_task(wrapper())
+        # self.bot.submit_async_task(wrapper())
 
     def on_enable(self):
         self.bot: CountdownBot

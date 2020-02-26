@@ -285,7 +285,7 @@ class CountdownBot(CQHttp):
         - 初始化协程池
         - 连接数据库
         """
-        self.db_conn = sqlite3.connect("data.db")
+        self.db_conn = sqlite3.connect("data.db", check_same_thread=False)
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
         self.__load_plugins()
@@ -441,7 +441,7 @@ class CountdownBot(CQHttp):
         停止CountdownBot
         """
         self.logger.info("Shutting down..")
-        
+
         for plugin in self.plugins:
             self.logger.info(f"Disabling {plugin.plugin_id}")
             plugin.on_disable()

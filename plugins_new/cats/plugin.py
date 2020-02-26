@@ -59,7 +59,7 @@ class CatsPlugin(Plugin):
         self.bot: CountdownBot
         self.conn = self.bot.db_conn
         cursor = self.conn.cursor()
-        cursor.execute("""CREATE TABLE CATS IF NOT EXISTS(
+        cursor.execute("""CREATE TABLE IF NOT EXISTS CATS(
             ID INTEGER PRIMARY KEY,
             USER_ID INTEGER NOT NULL,
             UPLOAD_TIME INTEGER,

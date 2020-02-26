@@ -62,7 +62,7 @@ class HitokotoPlugin(Plugin):
     async def schedule_loop(self):
         if self.config.USING_URL_LIST:
             async with self.aioclient.get(self.config.HITOKOTO_BROADCAST_LIST) as resp:
-                broadcast_list = await resp.json()
+                broadcast_list = await resp.json(content_type="")
         else:
             broadcast_list = self.config.HITOKOTO_BROADCAST_LOCAL_LIST
         for group in broadcast_list:
