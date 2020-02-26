@@ -5,14 +5,12 @@ from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
 from common.event import GroupMessageEvent
-import aiohttp
-import urllib
 from typing import Dict, List
-
+import aiohttp
 
 class Music163Config(ConfigBase):
     # https://github.com/Binaryify/NeteaseCloudMusicApi
-    API_URL = "http://127.0.0.1:3000"
+    API_URL = "http://localhost:3000"
     SEARCH_LIMIT = 10
     LOGIN_MODE = "phone"  # "phone" or "email" 其他则不登录
     PHONE = ""
