@@ -129,7 +129,7 @@ class CountdownBot(CQHttp):
                 self.logger.debug(f"invoking {command_name}")
                 self.command_manager.name_bindings[command_name].invoke(
                     args=splited[1:],
-                    raw_string=evt.raw_message,
+                    raw_string=evt.raw_message[len(prefix):],
                     context=context,
                     event=evt,
                     bot=self
@@ -384,7 +384,7 @@ class CountdownBot(CQHttp):
         if exc:
             # import traceback
             # traceback.print_exc()
-            self.logger.exception("Exception: ")
+            self.logger.exception(exc)
 
             raise exc
             # self.logger.info(traceback.format_exc())
