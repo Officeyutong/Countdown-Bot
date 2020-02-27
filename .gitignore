@@ -11,6 +11,7 @@ logs
 test.py
 data.db
 cats.db
+sign_in.db
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
