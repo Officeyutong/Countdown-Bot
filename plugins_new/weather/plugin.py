@@ -4,7 +4,7 @@ from common.datatypes import PluginMeta
 from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
-from common.event import GroupMessageEvent
+from common.event import MessageEvent
 import aiohttp
 import urllib
 from typing import Dict, List
@@ -48,7 +48,7 @@ class WeatherPlugin(Plugin):
 最高温度: {data['tmp_max']}摄氏度
 最低温度: {data['tmp_min']}摄氏度"""
 
-    async def command_weather(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
+    async def command_weather(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
         weather_now = await self.get_data(args[0], "weather", "now")
         weather_forecast = await self.get_data(args[0], "weather", "forecast")
         if not weather_now['status'] == "ok":
