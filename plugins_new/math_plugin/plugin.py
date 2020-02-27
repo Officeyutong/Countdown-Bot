@@ -106,7 +106,7 @@ LaTeX:
 {sympy.latex(sympy_obj)}
 
 图像:
-[CQ:image,file=base64://{rendered}]
+[CQ:image,file=base64://{self.encode_bytes(rendered)}]
 """
 
     def solve(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
