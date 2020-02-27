@@ -12,6 +12,7 @@ import pathlib
 import aiofiles
 import re
 
+
 class DockerRunnerConfig(ConfigBase):
     DOCKER_IMAGE = "python"
     # 输出长度限制，字节
@@ -102,7 +103,7 @@ class DockerRunnerPlugin(Plugin):
         if args[0] not in self.config.LANGUAGE_SETTINGS:
             await self.bot.client_async.send(context, "未知语言ID")
             return
-        code = " ".join(raw_string.split(" ")[2:])
+        code = raw_string.replace("execx", "").replace(args[0], "")
         self.logger.info(f"Running: \n{code}")
         await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context)
 
