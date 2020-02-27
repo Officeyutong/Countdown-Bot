@@ -102,7 +102,7 @@ class DockerRunnerPlugin(Plugin):
         if args[0] not in self.config.LANGUAGE_SETTINGS:
             await self.bot.client_async.send(context, "未知语言ID")
             return
-        code = " ".join(raw_string.split(" ")[2:])
+        code = " ".join(raw_string.split(" ")[1:])
         self.logger.info(f"Running: {code}")
         await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context)
 
