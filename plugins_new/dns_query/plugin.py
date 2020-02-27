@@ -4,7 +4,7 @@ from common.datatypes import PluginMeta
 from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
-from common.event import GroupMessageEvent
+from common.event import MessageEvent
 from typing import Dict, List
 from io import StringIO
 from dns import resolver
@@ -52,7 +52,7 @@ class DNSPlugin(Plugin):
         else:
             return self.BASE_query(domain, query_mode)
 
-    def command_dns(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
+    def command_dns(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
         def wrapper():
             if not len(args):
                 self.bot.client_async.send(context, "请输入正确的域名")

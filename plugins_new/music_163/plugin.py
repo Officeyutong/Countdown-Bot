@@ -4,7 +4,7 @@ from common.datatypes import PluginMeta
 from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
-from common.event import GroupMessageEvent
+from common.event import MessageEvent
 from typing import Dict, List
 import aiohttp
 
@@ -69,7 +69,7 @@ class Music163Plugin(Plugin):
         else:
             return result["result"]["songs"]
 
-    async def command_music(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
+    async def command_music(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
         if len(args) == 0:
             await self.bot.client_async.send(context, "输入不合法")
             return

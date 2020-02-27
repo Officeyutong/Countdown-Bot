@@ -4,7 +4,7 @@ from common.datatypes import PluginMeta
 from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
-from common.event import GroupMessageEvent
+from common.event import MessageEvent
 from typing import List
 import base64
 from aip import AipSpeech
@@ -36,7 +36,7 @@ class ReadPlugin(Plugin):
         else:
             return base64.encodebytes(result).decode().replace("\n", "")
 
-    def command_read(self, plugin, args: List[str], raw_string: str, context, evt: GroupMessageEvent):
+    def command_read(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
         def wrapper():
             text = " ".join(args)
             if len(text) > self.config.MAX_STRING_LENGTH:
