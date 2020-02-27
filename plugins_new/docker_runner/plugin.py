@@ -10,7 +10,7 @@ import asyncio
 import tempfile
 import pathlib
 import aiofiles
-
+import re
 
 class DockerRunnerConfig(ConfigBase):
     DOCKER_IMAGE = "python"
@@ -42,6 +42,10 @@ class DockerRunnerConfig(ConfigBase):
 
 class DockerRunnerPlugin(Plugin):
     async def run_code(self, code: str, language_cfg: dict, context: dict, stdin: bytes = b"") -> str:
+        pattern = re.compile(r'&#(.*?);')
+        for item in pattern.findall(code):
+            code = code.replace("&#{};".format(
+                item), bytes([int(item)]).decode("utf-8"))
         self.bot.logger.info(f"Running...")
         client = docker.from_env()
         temp_dir = pathlib.Path(tempfile.mkdtemp())
@@ -77,7 +81,7 @@ class DockerRunnerPlugin(Plugin):
                 container.stop()
             except Exception as ex:
                 self.bot.logger.exception(ex)
-            await self.bot.client_async.send(context, f"代码'{code}'执行超时")
+            await self.bot.client_async.send(context, f"代码'{code}'执行超时", auto_escape=False)
             # timed_out = True
         # if not timed_out:
         output = container.logs().decode()
