@@ -28,20 +28,20 @@ class DockerRunnerConfig(ConfigBase):
         "cpp": {
             "sourceFilename": "{name}.cpp",
             "executeFilename": "{name}.out",
-            "compile": "g++ {source} -o {target}",
+            "compile": "g++ -fdiagnostics-color=never {source} -o {target}",
             "run": "./{target}"
         },
         "c": {
             "sourceFilename": "{name}.c",
             "executeFilename": "{name}.out",
-            "compile": "gcc {source} -o {target}",
+            "compile": "gcc  -fdiagnostics-color=never {source} -o {target}",
             "run": "./{target}"
         }
     }
 
 
 class DockerRunnerPlugin(Plugin):
-    async def run_code(self, code: str, language_cfg: dict, context: dict) -> str:
+    async def run_code(self, code: str, language_cfg: dict, context: dict, stdin: bytes = b"") -> str:
         self.bot.logger.info(f"Running...")
         client = docker.from_env()
         temp_dir = pathlib.Path(tempfile.mkdtemp())
@@ -49,13 +49,16 @@ class DockerRunnerPlugin(Plugin):
         exe_file = language_cfg["executeFilename"].format(name="app")
         async with aiofiles.open(temp_dir/src_file, "w") as f:
             await f.write(code)
+        async with aiofiles.open(temp_dir/"f_stdin", "wb") as f:
+            await f.write(stdin)
         command = language_cfg["compile"].format(source=src_file, target=exe_file) \
-            + " && "+language_cfg["run"].format(target=exe_file)
-        container = client.containers.create(
+            + " && "+language_cfg["run"].format(target=exe_file) + " < f_stdin"
+        container = client.containers.run(
             image=self.config.DOCKER_IMAGE,
             command=f"sh -c '{command}'",
+            stdin_open=True,
+            detach=True,
             tty=True,
-            detach=False,
             network_mode="none",
             working_dir="/temp",
             volumes={str(temp_dir): {"bind": "/temp", "mode": "rw"}},
@@ -64,8 +67,6 @@ class DockerRunnerPlugin(Plugin):
             oom_kill_disable=True,
             nano_cpus=int(0.4*1/1e-9)
         )
-        container.start()
-        # timed_out = False
         try:
             await asyncio.wait_for(asyncio.wrap_future(
                 self.bot.submit_multithread_task(container.wait)
@@ -105,7 +106,7 @@ class DockerRunnerPlugin(Plugin):
         code = raw_string.strip()[5:]
         code = f"""CALLER_UID={context['user_id']}\nCALLER_NICKNAME={str(context['sender']['nickname']).encode()}.decode()\nCALLER_CARD={str(context['sender']['card']).encode()}.decode()\n"""+code
         self.logger.debug(f"Code: {code}")
-        await self.run_code(code, self.config.LANGUAGE_SETTINGS["python"], context)
+        await self.run_code(code, self.config.LANGUAGE_SETTINGS["python"], context, "qwqqwq".encode())
 
     def on_enable(self):
         self.bot: CountdownBot
