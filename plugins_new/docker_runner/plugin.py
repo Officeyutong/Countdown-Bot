@@ -24,6 +24,18 @@ class DockerRunnerConfig(ConfigBase):
             "executeFilename": "{name}.py",
             "compile": "cp {source} {target}",
             "run": "python3.8 {target}"
+        },
+        "cpp": {
+            "sourceFilename": "{name}.cpp",
+            "executeFilename": "{name}.out",
+            "compile": "g++ {source} -o {target}",
+            "run": "./{target}"
+        },
+        "c": {
+            "sourceFilename": "{name}.c",
+            "executeFilename": "{name}.out",
+            "compile": "gcc {source} -o {target}",
+            "run": "./{target}"
         }
     }
 
@@ -50,15 +62,10 @@ class DockerRunnerPlugin(Plugin):
             mem_limit="50m",
             memswap_limit="50m",
             oom_kill_disable=True,
-            nano_cpus=int(0.1*1/1e-9)
+            nano_cpus=int(0.4*1/1e-9)
         )
         container.start()
-
-        # def __exception(x):
-        #     print(x.result(), x.exception())
-        #     # raise x.exception()
-        # fut.add_done_callback(__exception)
-        timed_out = False
+        # timed_out = False
         try:
             await asyncio.wait_for(asyncio.wrap_future(
                 self.bot.submit_multithread_task(container.wait)
@@ -70,21 +77,29 @@ class DockerRunnerPlugin(Plugin):
             except Exception as ex:
                 self.bot.logger.exception(ex)
             await self.bot.client_async.send(context, f"代码'{code}'执行超时")
-            timed_out = True
-        if not timed_out:
-            output = container.logs().decode()
-            if len(output) > self.config.OUTPUT_LENGTH_LIMIT:
-                output = output[:self.config.OUTPUT_LENGTH_LIMIT] + \
-                    "[超出长度限制部分已截断]"
+            # timed_out = True
+        # if not timed_out:
+        output = container.logs().decode()
+        if len(output) > self.config.OUTPUT_LENGTH_LIMIT:
+            output = output[:self.config.OUTPUT_LENGTH_LIMIT] + \
+                "[超出长度限制部分已截断]"
             # self.bot.logger.debug(container.logs().decode())
-            self.bot.logger.debug("done.")
-            await self.bot.client_async.send(context, "无输出" if not output else output)
+        self.bot.logger.debug("done.")
+        await self.bot.client_async.send(context, "无输出" if not output else output)
         container.remove(force=True)
         import shutil
         shutil.rmtree(temp_dir)
 
     async def command_execx(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
-        pass
+        if not args:
+            await self.bot.client_async.send(context, f'execx [语言ID] 代码\n支持的语言ID: {" ".join(self.config.LANGUAGE_SETTINGS.keys())}')
+            return
+        if args[0] not in self.config.LANGUAGE_SETTINGS:
+            await self.bot.client_async.send(context, "未知语言ID")
+            return
+        code = " ".join(raw_string.split(" ")[2:])
+        self.logger.info(f"Running: {code}")
+        await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context)
 
     async def command_exec(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
         code = raw_string.strip()[5:]
@@ -99,6 +114,13 @@ class DockerRunnerPlugin(Plugin):
             command_name="exec",
             command_handler=self.command_exec,
             help_string="在Docker中执行Python3代码",
+            chats={ChatType.group},
+            is_async=True
+        )
+        self.register_command_wrapped(
+            command_name="execx",
+            command_handler=self.command_execx,
+            help_string="在Docker中执行代码 | 输入 execx 查看帮助",
             chats={ChatType.group},
             is_async=True
         )
