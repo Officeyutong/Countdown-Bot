@@ -382,9 +382,10 @@ class CountdownBot(CQHttp):
     def __future_exception_handler(self, future: asyncio.Future):
         exc = future.exception()
         if exc:
-            # import traceback
+            import traceback
             # traceback.print_exc()
-            self.logger.exception(exc)
+            
+            # self.logger.error(traceback.format_exception(value=exc))
 
             raise exc
             # self.logger.info(traceback.format_exc())
@@ -463,7 +464,7 @@ class CountdownBot(CQHttp):
         future.add_done_callback(self.__future_exception_handler)
         return future
 
-    def submit_multithread_task(self, fn: Callable[[], Any], *args, **kwargs):
+    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, /, *args, **kwargs):
         """
         提交同步任务至线程池
         @param fn: Callable对象
@@ -474,7 +475,9 @@ class CountdownBot(CQHttp):
         future = self.thread_pool.submit(
             fn, *args, **kwargs
         )
-        future.add_done_callback(self.__future_exception_handler)
+        self.logger.debug(f"handle exception: {handle_exception}")
+        if handle_exception:
+            future.add_done_callback(self.__future_exception_handler)
         return future
 
     def __console_stop_command(self, plugin, args: List[str], raw_string: str, context, evt):

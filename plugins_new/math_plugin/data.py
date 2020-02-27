@@ -1,0 +1,28 @@
+import numpy as np
+MATH_NAMES = {
+    "sin": np.sin,
+    "cos": np.cos,
+    "tan": np.tan,
+    "exp": np.exp,
+    "floor": np.floor,
+    "around": np.around,
+    "log": np.log,
+    "log10": np.log10,
+    "log2": np.log2,
+    "sinh": np.sinh,
+    "cosh": np.cosh,
+    "tanh": np.tanh,
+    "arcsin": np.arcsin,
+    "arccos": np.arccos,
+    "arctan": np.arctan,
+    "arcsinh": np.arcsinh,
+    "arccosh": np.arccosh,
+    "arctanh": np.arctanh,
+    "abs": np.abs,
+    "sqrt": np.sqrt,
+    "log1p": np.log1p,
+    "sign": np.sign,
+    "ceil": np.ceil,
+    "modf": np.modf,
+    "pi": np.pi
+}
