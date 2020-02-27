@@ -92,6 +92,9 @@ class MathPlugin(Plugin):
                 await asyncio.wait_for(asyncio.wrap_future(self.bot.thread_pool.submit(lambda: func(*args, **kwargs))), timeout=timeout)
             except asyncio.TimeoutError:
                 await self.bot.client_async.send(args[3], err_msg)
+            except Exception as ex:
+                await self.bot.client_async.send(args[3], str(ex))
+                raise ex
         return wrapper
 
     def encode_bytes(self, bytes_) -> str:
