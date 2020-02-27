@@ -19,6 +19,8 @@ class DockerRunnerConfig(ConfigBase):
     OUTPUT_LENGTH_LIMIT = 200
     # 执行Python代码的时间限制(ms)
     EXECUTE_TIME_LIMIT = 2000
+    # 用户提供的输入数据在多长时间后到期，ms
+    INPUT_EXPIRE_AFTER = 1000*60*60
     LANGUAGE_SETTINGS = {
         "python": {
             "sourceFilename": "{name}.py_",
@@ -103,15 +105,31 @@ class DockerRunnerPlugin(Plugin):
         if args[0] not in self.config.LANGUAGE_SETTINGS:
             await self.bot.client_async.send(context, "未知语言ID")
             return
-        code = raw_string.replace("execx", "").replace(args[0], "")
+        stdin_data = self.user_input.get((evt.group_id, evt.user_id), b"")
+        code = raw_string.replace("execx", "", 1).replace(args[0], "", 1)
         self.logger.info(f"Running: \n{code}")
-        await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context)
+        await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context, stdin_data)
 
     async def command_exec(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        stdin_data = self.user_input.get((evt.group_id, evt.user_id), b"")
         code = raw_string.strip()[5:]
         code = f"""CALLER_UID={context['user_id']}\nCALLER_NICKNAME={str(context['sender']['nickname']).encode()}.decode()\nCALLER_CARD={str(context['sender']['card']).encode()}.decode()\n"""+code
         self.logger.debug(f"Code: {code}")
-        await self.run_code(code, self.config.LANGUAGE_SETTINGS["python"], context, "qwqqwq".encode())
+        await self.run_code(code, self.config.LANGUAGE_SETTINGS["python"], context, stdin_data)
+
+    async def command_input(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if not args:
+            await self.bot.client_async.send(context, "请提供输入数据")
+        user_id = (evt.group_id, evt.user_id)
+        data = raw_string.replace("input ", "", 1).encode("utf-8")
+        self.user_input[user_id] = data
+
+        async def remover():
+            await asyncio.sleep(self.config.INPUT_EXPIRE_AFTER/1000)
+            if user_id in self.user_input:
+                del self.user_input[user_id]
+        self.bot.submit_async_task(remover())
+        await self.bot.client_async.send(context, f"您的输入数据已经保存,此输入数据将会在下次使用input指令或 {self.config.INPUT_EXPIRE_AFTER}ms 后失效.")
 
     def on_enable(self):
         self.bot: CountdownBot
@@ -130,6 +148,14 @@ class DockerRunnerPlugin(Plugin):
             chats={ChatType.group},
             is_async=True
         )
+        self.register_command_wrapped(
+            command_name="input",
+            command_handler=self.command_input,
+            help_string="指定下一次执行代码时的标准输入 | input [输入数据]",
+            chats={ChatType.group},
+            is_async=True
+        )
+        self.user_input: Dict[str, bytes] = dict()
 
 
 def get_plugin_class():
