@@ -220,30 +220,24 @@ class SignInPlugin(Plugin):
 
     def command_group_query(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
         try:
-            if len(args) == 0:
-                now = time.localtime(int(time.time()))
-                query_month_begin = int(time.mktime(time.strptime(
-                    f"{now.tm_year}-{now.tm_mon}", "%Y-%m")))
-                query_month_end = int(time.time())
-            elif len(args) == 1:
-                now = time.localtime(int(time.time()))
-                query_month_begin = int(time.mktime(
-                    time.strptime(f"{now.tm_year}-{args[0]}", "%Y-%m")))
-                if args[0] == "12":
-                    query_month_end = int(time.mktime(
-                        time.strptime(f"{now.tm_year+1}-1", "%Y-%m")))-1
-                else:
-                    query_month_end = int(time.mktime(
-                        time.strptime(f"{now.tm_year}-{int(args[0])+1}", "%Y-%m")))-1
+            now = time.localtime(int(time.time()))
+            year = now.tm_year
+            month = now.tm_mon
+
+            if len(args) == 1:
+                month = int(args[0])
+            elif len(args) == 2:
+                month = int(args[0])
+                year = int(args[1])
+
+            query_month_begin = int(time.mktime(
+                time.strptime(f"{year}-{month}", "%Y-%m")))
+            if month == 12:
+                query_month_end = int(time.mktime(
+                    time.strptime(f"{year+1}-1", "%Y-%m")))-1
             else:
-                query_month_begin = int(time.mktime(
-                    time.strptime(f"{args[1]}-{args[0]}", "%Y-%m")))
-                if args[0] == "12":
-                    query_month_end = int(time.mktime(
-                        time.strptime(f"{int(args[1])+1}-1", "%Y-%m")))-1
-                else:
-                    query_month_end = int(time.mktime(
-                        time.strptime(f"{args[1]}-{int(args[0])+1}", "%Y-%m")))-1
+                query_month_end = int(time.mktime(
+                    time.strptime(f"{year}-{month+1}", "%Y-%m")))-1
         except Exception:
             self.bot.client_async.send(context, "请输入合法的月份年份")
             return
