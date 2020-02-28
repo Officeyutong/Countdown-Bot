@@ -1,4 +1,4 @@
-from typing import Union, TypeVar
+from typing import Union, TypeVar, Dict, Any
 from pathlib import Path
 
 
@@ -12,7 +12,7 @@ def load_from_file(file: Union[Path, str], clazz) -> ConfigBase:
         return clazz()
     with open(file, "rb") as py_file:
         code_obj = compile(py_file.read(), file, "exec")
-        config_vars = {}
+        config_vars: Dict[str, Any] = {}
         exec(code_obj, config_vars)
         instance = clazz()
         for key, value in config_vars.items():

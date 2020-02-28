@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Awaitable
 
 from dataclasses import dataclass
 import asyncio
@@ -11,7 +11,7 @@ class TimeTuple:
 
 class ScheduleLoopManager:
     def __init__(self, check_interval: int, execute_delay: int, bot):
-        self.tasks = []
+        self.tasks: List[Awaitable] = []
         self.check_interval = check_interval
         self.execute_delay = execute_delay
         self.bot = bot

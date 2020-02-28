@@ -1,7 +1,7 @@
 from functools import wraps
 from common.event import EventBase, Listener, EventManager, EventCallback
 from common.command import CommandManager, Command, CommandHandler, ChatType
-from typing import Callable, Set, Tuple, NoReturn, Type, Optional, Iterable, TypeVar
+from typing import Callable, Set, Tuple, NoReturn, Type, Optional, Iterable, TypeVar, Any
 from common.datatypes import PluginMeta
 from common.config_loader import ConfigBase
 from common.state import StateManager, StateHandler
@@ -34,7 +34,7 @@ class Plugin:
                  plugin_base_dir: Path,
                  plugin_id: str,
                  plugin_meta: PluginMeta,
-                 bot: '.countdown_bot.CountdownBot',  # type: .countdown_bot.CountdownBot
+                 bot: Any,
                  config: Optional[ConfigBase]
                  ):
         """
@@ -48,11 +48,11 @@ class Plugin:
         self.__plugin_id = plugin_id
         self.state_manager = state_manager
         self.__plugin_meta = plugin_meta
-        self.__bot = bot  # type: .countdown_bot.CountdownBot
+        self.__bot = bot
         self.schedule_loop_manager = schedule_loop_manager
 
     @property
-    def bot(self) -> ".countdown_bot.CountdownBot":  # type: .countdown_bot.CountdownBot
+    def bot(self):
         """
         返回此加载此插件的Bot实例
         """
@@ -113,7 +113,7 @@ class Plugin:
 
     T = TypeVar("T")
 
-    def register_event_listener(self, event: Type[T], callback: Callable[[T], None]) -> NoReturn:
+    def register_event_listener(self, event: Type[T], callback: Callable[[T], None]):
         """
         注册事件监听函数。
         @param event: 要监听的事件的类
@@ -126,7 +126,7 @@ class Plugin:
     #     self.__event_listeners.remove((event, callback))
     #     self.event_manager.unregister_event(event, callback)
 
-    def register_all_event_listeners(self, listener_class_instance: Listener) -> NoReturn:
+    def register_all_event_listeners(self, listener_class_instance: Listener):
         """
         注册一个Listener下的所有事件监听器。
         @param listener_class_instance: 要注册的Listsner类
@@ -168,18 +168,18 @@ class Plugin:
 
         ))
 
-    def register_command(self, command: Command) -> NoReturn:
+    def register_command(self, command: Command):
         """注册命令"""
         self.command_manager.register_command(command)
 
-    def register_state_handler(self, state_handler: StateHandler) -> NoReturn:
+    def register_state_handler(self, state_handler: StateHandler):
         """
         注册状态处理器。
         用于在status指令时调用，返回状态文本。
         """
         self.state_manager.register_state_caller(state_handler)
 
-    def on_enable(self) -> NoReturn:
+    def on_enable(self):
         """
         插件被启用时调用
         """

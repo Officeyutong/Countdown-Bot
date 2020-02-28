@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Callable, Mapping, Set, TypeVar
+from typing import List, Callable, Mapping, Set, TypeVar, Optional, Type, Any, Dict
 from dataclasses import dataclass
 from enum import Enum
 
@@ -119,7 +119,7 @@ class GroupMessageSender:
     age: int
     area: str
     level: str
-    role: GroupMemberRole
+    role: Optional[GroupMemberRole]
     title: str
 
     def __init__(self, val: dict):
@@ -138,12 +138,12 @@ class GroupMessageSender:
 class PrivateMessageEvent(MessageEvent):
     def __init__(self, context: dict):
         super().__init__(context)
-        self.sub_type: PrivateMessageSubtype = PrivateMessageSubtype(
+        self.sub_type: Optional[PrivateMessageSubtype] = PrivateMessageSubtype(
             context["sub_type"]) if context.get("sub_type", None) else None
 
-        self.sender: SimpleMessageSender = SimpleMessageSender(
+        self.sender: Optional[SimpleMessageSender] = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
-        self.anonymous: GroupAnonymousSender = GroupAnonymousSender(
+        self.anonymous: Optional[GroupAnonymousSender] = GroupAnonymousSender(
             context["anonymous"]) if context.get("anonymous", None) else None
         self.reply = None
         self.auto_escape = None
@@ -152,30 +152,30 @@ class PrivateMessageEvent(MessageEvent):
 class GroupMessageEvent(MessageEvent):
     def __init__(self, context: dict):
         super().__init__(context)
-        self.sub_type: GroupMessageSubtype = GroupMessageSubtype(
+        self.sub_type: Optional[GroupMessageSubtype] = GroupMessageSubtype(
             context["sub_type"]) if context.get("sub_type", None) else None
         self.group_id: int = context.get("group_id", None)
-        self.sender: SimpleMessageSender = SimpleMessageSender(
+        self.sender: Optional[SimpleMessageSender] = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
-        self.reply: str = None
-        self.auto_escape: bool = None
-        self.at_sender: bool = None
-        self.delete: bool = None
-        self.kick: bool = None
-        self.ban: bool = None
-        self.ban_duration: int = None
+        self.reply: Optional[str] = None
+        self.auto_escape: Optional[bool] = None
+        self.at_sender: Optional[bool] = None
+        self.delete: Optional[bool] = None
+        self.kick: Optional[bool] = None
+        self.ban: Optional[bool] = None
+        self.ban_duration: Optional[int] = None
 
 
 class DiscussMessageEvent(MessageEvent):
     def __init__(self, context: dict):
         super().__init__(context)
         self.sub_type = "discuss"
-        self.discuss_id: int = context.get("discuss_id", None)
-        self.sender: SimpleMessageSender = SimpleMessageSender(
+        self.discuss_id: Optional[int] = context.get("discuss_id", None)
+        self.sender: Optional[SimpleMessageSender] = SimpleMessageSender(
             context["sender"]) if context.get("sender", None) else None
-        self.reply: str = None
-        self.auto_escape: bool = None
-        self.at_sender: bool = None
+        self.reply: Optional[str] = None
+        self.auto_escape: Optional[bool] = None
+        self.at_sender: Optional[bool] = None
 
 
 class NoticeEvent(EventBase):
@@ -260,8 +260,8 @@ class FriendAddRequestEvent(RequestEvent):
         self.user_id: int = context["user_id"]
         self.comment: str = context["comment"]
         self.flag: str = context["flag"]
-        self.approve: bool = None
-        self.remark: str = None
+        self.approve: Optional[bool] = None
+        self.remark: Optional[str] = None
 
 
 class GroupInviteOrAddRequestEvent(RequestEvent):
@@ -272,8 +272,8 @@ class GroupInviteOrAddRequestEvent(RequestEvent):
         self.flag: str = context["flag"]
         self.group_id: int = context["group_id"]
         self.sub_type = GroupJoinType(context["sub_type"])
-        self.approve: bool = None
-        self.reason: str = None
+        self.approve: Optional[bool] = None
+        self.reason: Optional[str] = None
 
     # def set_reply()
 EventCallback = Callable[[EventBase], None]
@@ -286,7 +286,7 @@ class Listener:
 class EventManager:
 
     def __init__(self, bot):
-        self.events: Mapping[EventBase, Set[EventCallback]] = {}
+        self.events: Dict[Any, Set[EventCallback]] = {}
         self.bot = bot
 
     def process_event(self, event: EventBase):

@@ -1,21 +1,22 @@
-from cqhttp import CQHttp
+from cqhttp import CQHttp  # type: ignore
 # from aiocqhttp import CQHttp
 from pathlib import Path
-from common.plugin import Plugin
-from common.event import EventManager, MessageEvent
-import common.event as event
-from common.command import CommandManager, Command, ChatType
-from common.state import StateManager
-from common.config_loader import ConfigBase, load_from_file
-from typing import List, Iterable, Callable, DefaultDict, Any
-from common.datatypes import PluginMeta
-from common.loop import ScheduleLoopManager
-from common.utils import stop_thread
+from common.plugin import Plugin  # type: ignore
+from common.event import EventManager, MessageEvent  # type: ignore
+import common.event as event  # type: ignore
+from common.command import CommandManager, Command, ChatType  # type: ignore
+from common.state import StateManager  # type: ignore
+from common.config_loader import ConfigBase, load_from_file  # type: ignore
+from typing import List, Iterable, Callable, DefaultDict, Any, Optional, Union, Dict
+from common.datatypes import PluginMeta  # type: ignore
+from common.loop import ScheduleLoopManager  # type: ignore
+from common.utils import stop_thread  # type: ignore
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
-from .api_client.api import ClientWrapper
-from .api_client.async_api_client import AsyncHTTPAPIClient
+from .api_client.api import ClientWrapper  # type: ignore
+from .api_client.async_api_client import AsyncHTTPAPIClient  # type: ignore
 
+import concurrent
 import sys
 import os
 import importlib
@@ -149,7 +150,7 @@ class CountdownBot(CQHttp):
                     result[key] = getattr(evt, key)
             return result
 
-    def __private_message_handler(self, context: dict) -> dict:
+    def __private_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.PrivateMessageEvent(context)
 
         if not self.handle_command(
@@ -161,8 +162,9 @@ class CountdownBot(CQHttp):
                 if getattr(evt, key) is not None:
                     result[key] = getattr(evt, key)
             return result
+        return None
 
-    def __discuss_message_handler(self, context: dict) -> dict:
+    def __discuss_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.DiscussMessageEvent(context)
 
         # self.logger.info(f"Processing message event - discuss_id: {evt.discuss_id} user_id: {evt.user_id}")
@@ -175,6 +177,7 @@ class CountdownBot(CQHttp):
                 if getattr(evt, key) is not None:
                     result[key] = getattr(evt, key)
             return result
+        return None
 
     def __init_events(self):
         self.on_message("private")(self.__private_message_handler)
@@ -379,12 +382,12 @@ class CountdownBot(CQHttp):
             is_console=False
         ))
 
-    def __future_exception_handler(self, future: asyncio.Future):
+    def __future_exception_handler(self, future: Union[asyncio.Future, concurrent.futures.Future]):
         exc = future.exception()
         if exc:
             import traceback
             # traceback.print_exc()
-            
+
             # self.logger.error(traceback.format_exception(value=exc))
 
             raise exc
@@ -540,7 +543,7 @@ class CountdownBot(CQHttp):
             evt = event_class(context)
             self.logger.debug(f"Base event received...{context['post_type']}")
             self.event_manager.process_event(evt)
-            result = {}
+            result: Dict[str, Any] = {}
             for key in reply_keys:
                 self.__fill_dict(result, evt, key)
             return result

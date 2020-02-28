@@ -2,7 +2,8 @@ from typing import Dict, Set, Callable, List, Iterable, Optional, Any
 from common.event import MessageEvent
 from enum import Enum
 # (插件,参数列表,原始字符串,上下文)
-CommandHandler = Callable[[Any, List[str], str, dict, MessageEvent], None]
+CommandHandler = Callable[[Any, List[str], str,
+                           Optional[dict], Optional[MessageEvent]], None]
 
 
 class ChatType(Enum):
