@@ -32,8 +32,8 @@ class ChinaWeatherPlugin(Plugin):
         self.client = aiohttp.ClientSession()
 
 
-# def get_plugin_class():
-#     return ChinaWeatherPlugin
+def get_plugin_class():
+    return ChinaWeatherPlugin
 
 
 def get_plugin_meta():
