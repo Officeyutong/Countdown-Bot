@@ -2,10 +2,9 @@ cqhttp
 docker
 sympy
 pyglet
-oss2
 baidu-aip
 pillow
-selenium
+pyppeteer
 bs4
 lxml
 numpy
