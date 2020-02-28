@@ -15,4 +15,4 @@ class SignInData:
 class UserData:
     group_id: int
     user_id: int
-    score: int
+    score: int = 0
