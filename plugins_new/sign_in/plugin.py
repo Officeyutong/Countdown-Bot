@@ -39,7 +39,7 @@ class SignInPlugin(Plugin):
                     user_id,
                     last_time,
                 )).fetchone()  # 上次签到数据
-            return SignInData(*result[:5])
+            return SignInData(*result[:6])
         else:
             return SignInData(group_id, user_id)
 
@@ -80,7 +80,7 @@ class SignInPlugin(Plugin):
             group_id,
         )).fetchall()
 
-        data: List[UserData] = list(UserData(*row[:3]) for row in result)
+        data: List[UserData] = [UserData(*row[:3]) for row in result]
 
         return sorted(data, key=lambda x: x.score, reverse=True)
 
@@ -109,7 +109,7 @@ class SignInPlugin(Plugin):
                     time_end,
                 )
             ).fetchall()
-        data: List[SignInData] = list(SignInData(*row[:5]) for row in result)
+        data: List[SignInData] = [SignInData(*row[:6]) for row in result]
         return data
 
     def save_data(self, sign_in_data: SignInData) -> None:
@@ -218,6 +218,44 @@ class SignInPlugin(Plugin):
             buf.write(f"群{item.group_id}积分为：{item.score}\n")
         self.bot.client_async.send(context, buf.getvalue())
 
+    def command_group_query(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        try:
+            now = time.localtime(int(time.time()))
+            year = now.tm_year
+            month = now.tm_mon
+
+            if len(args) == 1:
+                month = int(args[0])
+            elif len(args) == 2:
+                month = int(args[0])
+                year = int(args[1])
+
+            query_month_begin = int(time.mktime(
+                time.strptime(f"{year}-{month}", "%Y-%m")))
+            if month == 12:
+                query_month_end = int(time.mktime(
+                    time.strptime(f"{year+1}-1", "%Y-%m")))-1
+            else:
+                query_month_end = int(time.mktime(
+                    time.strptime(f"{year}-{month+1}", "%Y-%m")))-1
+        except Exception:
+            self.bot.client_async.send(context, "请输入合法的月份年份")
+            return
+
+        user_id = int(evt.sender.user_id)
+        group_id = int(evt.group_id)
+        group_sign_in_data = self.get_sign_in_data(
+            query_month_begin, query_month_end, group_id, user_id)
+        buf = StringIO()
+        buf.write(f"[CQ:at,qq={user_id}]\n")
+        buf.write(f"查询到{len(group_sign_in_data)}条签到记录：\n")
+        buf.write(f"日期 时间 积分 积分变化\n")
+        for item in group_sign_in_data:
+            time_str = time.strftime(
+                "%Y-%m-%d %H:%M", time.localtime(item.time))
+            buf.write(f"{time_str} {item.score} {item.score_changes:+d}\n")
+        self.bot.client_async.send(context, buf.getvalue())
+
     def on_disable(self):
         self.logger.info("SignIn: closing database..")
         self.conn.close()
@@ -268,8 +306,13 @@ class SignInPlugin(Plugin):
             command_name="签到积分",
             command_handler=self.command_user_query,
             help_string="签到积分查询",
-            chats={ChatType.private},
-            alias=["myscore"]
+            chats={ChatType.private}
+        )
+        self.register_command_wrapped(
+            command_name="签到记录",
+            command_handler=self.command_group_query,
+            help_string="签到记录查询 | 签到记录 [月份](可选) [年份](可选)",
+            chats={ChatType.group}
         )
 
 
