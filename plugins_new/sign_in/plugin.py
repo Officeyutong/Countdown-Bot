@@ -4,7 +4,7 @@ from common.datatypes import PluginMeta
 from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
-from common.event import GroupMessageEvent,PrivateMessageEvent
+from common.event import GroupMessageEvent, PrivateMessageEvent
 from typing import List, Dict
 from io import StringIO
 from .datatypes import *
@@ -39,9 +39,9 @@ class SignInPlugin(Plugin):
                     user_id,
                     last_time,
                 )).fetchone()  # 上次签到数据
-            return SignInData(result[0], result[1], result[2], result[3], result[4], result[5])
+            return SignInData(*result[:5])
         else:
-            return SignInData(group_id, user_id, 0, 0, 0, 0)
+            return SignInData(group_id, user_id)
 
     def clac_sign_in_times(self, group_id: int, user_id: int) -> (int, int):
         """
@@ -67,8 +67,7 @@ class SignInPlugin(Plugin):
         """
         result = self.conn.execute(
             "SELECT * FROM USERS WHERE USER_ID = ?", (user_id,)).fetchall()
-        data: List[UserData] = list(
-            UserData(row[0], row[1], row[2]) for row in result)
+        data: List[UserData] = list(UserData(*row[:3]) for row in result)
         return data
 
     def get_group_sign_in_ranklist(self, group_id: int) -> List[UserData]:
@@ -81,8 +80,7 @@ class SignInPlugin(Plugin):
             group_id,
         )).fetchall()
 
-        data: List[UserData] = list(
-            UserData(row[0], row[1], row[2]) for row in result)
+        data: List[UserData] = list(UserData(*row[:3]) for row in result)
 
         return sorted(data, key=lambda x: x.score, reverse=True)
 
@@ -111,8 +109,7 @@ class SignInPlugin(Plugin):
                     time_end,
                 )
             ).fetchall()
-        data: List[SignInData] = list(
-            SignInData(row[0], row[1], row[2], row[3], row[4], row[5]) for row in result)
+        data: List[SignInData] = list(SignInData(*row[:5]) for row in result)
         return data
 
     def save_data(self, sign_in_data: SignInData) -> None:
@@ -167,11 +164,8 @@ class SignInPlugin(Plugin):
 累计群签到次数：{all_times}""")
             return
 
-        sign_in_data = SignInData
-
-        sign_in_data.time = int(time.mktime(current_time))  # 签到时间
-        sign_in_data.user_id = user_id
-        sign_in_data.group_id = group_id
+        sign_in_data = SignInData(
+            group_id, user_id, int(time.mktime(current_time)))
 
         if last_time.tm_year == current_time.tm_year:
             # 上次签到和本次签到年份相等
