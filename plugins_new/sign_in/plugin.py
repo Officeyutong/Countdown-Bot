@@ -148,7 +148,7 @@ class SignInPlugin(Plugin):
 
         user_id = int(evt.sender.user_id)
 
-        last_sign_in_data = self.get_last_sign_in_data(
+        last_sign_in_data: SignInData = self.get_last_sign_in_data(
             group_id, user_id)  # 上次签到的数据
         last_time = time.localtime(last_sign_in_data.time)  # 上次签到的时间
         current_time = time.localtime(int(time.time()))  # 当前时间
@@ -164,7 +164,7 @@ class SignInPlugin(Plugin):
 累计群签到次数：{all_times}""")
             return
 
-        sign_in_data = SignInData(
+        sign_in_data: SignInData = SignInData(
             group_id, user_id, int(time.mktime(current_time)))
 
         if last_time.tm_year == current_time.tm_year:
