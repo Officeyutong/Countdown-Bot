@@ -244,12 +244,15 @@ class SignInPlugin(Plugin):
             )""")
             # 群号，QQ号，当前积分 可以拿来做排名
             self.conn.execute(
-                "CREATE INDEX GROUP_ID_INDEX ON SIGNINS(GROUP_ID)")
+                "CREATE INDEX SIGNIN_GROUP_ID_INDEX ON SIGNINS(GROUP_ID)")
             self.conn.execute(
-                "CREATE INDEX USER_ID_INDEX  ON SIGNINS(USER_ID)")
-            self.conn.execute("CREATE INDEX TIME_INDEX     ON SIGNINS(TIME)")
-            self.conn.execute("CREATE INDEX GROUP_ID_INDEX ON USERS(GROUP_ID)")
-            self.conn.execute("CREATE INDEX USER_ID_INDEX  ON USERS(USER_ID)")
+                "CREATE INDEX SIGNIN_USER_ID_INDEX  ON SIGNINS(USER_ID)")
+            self.conn.execute(
+                "CREATE INDEX SIGNIN_TIME_INDEX     ON SIGNINS(TIME)")
+            self.conn.execute(
+                "CREATE INDEX USERS_GROUP_ID_INDEX  ON USERS(GROUP_ID)")
+            self.conn.execute(
+                "CREATE INDEX USERS_USER_ID_INDEX   ON USERS(USER_ID)")
             self.conn.commit()
             self.conn.close()
         except Exception as ex:
