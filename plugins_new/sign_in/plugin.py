@@ -219,7 +219,7 @@ class SignInPlugin(Plugin):
         self.bot.client_async.send(context, buf.getvalue())
 
     def on_disable(self):
-        self.logger.info(f"SignIn: closing database..")
+        self.logger.info("SignIn: closing database..")
         self.conn.close()
 
     def on_enable(self):
