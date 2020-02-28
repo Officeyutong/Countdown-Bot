@@ -8,3 +8,9 @@ class SignInData:
     duration:int
     score:int
     score_changes:int
+
+@dataclass
+class UserData:
+    group_id:int
+    user_id:int
+    score:int
