@@ -28,6 +28,8 @@ import sys
 import io
 import sqlite3
 
+LOGGER: logging.Logger = None
+
 
 class CountdownBotConfig(ConfigBase):
     API_URL = "http://127.0.0.1:5001"
@@ -82,6 +84,7 @@ class CountdownBot(CQHttp):
         self.client = ClientWrapper(self.api_client.invoke)
         self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(
             self.api_client.invoke_async(x, y), loop=self.loop))
+        LOGGER = self.logger
 
     @property
     def logger(self) -> logging.Logger:
