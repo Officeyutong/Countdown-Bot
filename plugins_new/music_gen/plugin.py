@@ -18,6 +18,7 @@ import os
 import base64
 import requests
 import bs4
+import flask
 
 
 class MusicGenConfig(ConfigBase):
@@ -65,6 +66,21 @@ class MusicGenPlugin(Plugin):
             help_string="转换简谱并播放 | 使用genhelp指令查看帮助",
             chats={ChatType.group}
         )
+        self.bot.server_app.route(
+            "/music/download/<string:token>")(self.web_download_music_mp3)
+
+    def web_download_music_mp3(self, token: str):
+        client = Redis(connection_pool=self.connection_pool)
+        key = f"countdownbot-music-{token}"
+        if not client.exists(key):
+            # return 404, "Bad token"
+            flask.abort(404)
+        # file_bytes=
+        from io import BytesIO
+        buf = BytesIO(client.get(key))
+        buf.seek(0)
+        # client.delete(key)
+        return flask.send_file(buf, as_attachment=True, attachment_filename=f"{token}.mp3", conditional=True)
 
     def command_convert_play(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         def wrapper():
@@ -91,6 +107,7 @@ class MusicGenPlugin(Plugin):
             )
             self.generate_music(f"bpm:{bpm} "+result, context)
         self.bot.submit_multithread_task(wrapper)
+
     def noteconvert(self, note_string: str, context: dict):
         major = "C"
         tracks: List[List[str]] = []
