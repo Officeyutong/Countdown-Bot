@@ -114,7 +114,7 @@ class CountdownBot(CQHttp):
                 done = True
                 splited = evt.message[len(prefix):].split()
                 command_name = splited[0]
-                self.logger.info(f"Executing command: {splited[0]}")
+                self.logger.info(f"Executing command: {evt.raw_message} ")
 
                 if command_name not in self.command_manager.name_bindings:
                     self.send(context, f"未知指令: \"{command_name}\"")
@@ -144,9 +144,10 @@ class CountdownBot(CQHttp):
 
     def __group_message_handler(self, context: dict) -> dict:
         evt = event.GroupMessageEvent(context)
+        self.logger.debug(f"Handling group message {context}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"group:{evt.group_id}", current_chat_type=ChatType.group
-        ) or True:  # TODO: 开发完成后改成False
+        ):
             self.event_manager.process_event(evt)
             result = {}
             for key in ["reply", "auto_escape", "at_sender", "delete", "kick", "ban", "ban_duration"]:
@@ -156,7 +157,7 @@ class CountdownBot(CQHttp):
 
     def __private_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.PrivateMessageEvent(context)
-
+        self.logger.debug(f"Handling private message {context}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"private:{evt.user_id}", current_chat_type=ChatType.private
         ):
@@ -170,7 +171,7 @@ class CountdownBot(CQHttp):
 
     def __discuss_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.DiscussMessageEvent(context)
-
+        self.logger.debug(f"Handling discuss message {context}")
         # self.logger.info(f"Processing message event - discuss_id: {evt.discuss_id} user_id: {evt.user_id}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"discuss:{evt.discuss_id}", current_chat_type=ChatType.discuss
@@ -473,7 +474,7 @@ class CountdownBot(CQHttp):
         future.add_done_callback(self.__future_exception_handler)
         return future
 
-    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, / , *args, **kwargs):
+    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, /, *args, **kwargs):
         """
         提交同步任务至线程池
         @param fn: Callable对象
