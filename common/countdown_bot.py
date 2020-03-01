@@ -253,16 +253,16 @@ class CountdownBot(CQHttp):
             plugin.on_enable()
             self.plugins.append(plugin)
             self.logger.info(f"Loaded {plugin_id} successfully")
-            self.base_plugin_wrapper = Plugin(
-                self.event_manager,
-                self.command_manager,
-                self.state_manager,
-                self.schedule_loop_manager,
-                self.app_root,
-                "<base>",
-                PluginMeta("officeyutong", 2.0, "Bot内置功能"),
-                self
-            )
+        self.base_plugin_wrapper = Plugin(
+            self.event_manager,
+            self.command_manager,
+            self.state_manager,
+            self.schedule_loop_manager,
+            self.app_root,
+            "<base>",
+            PluginMeta("officeyutong", 2.0, "Bot内置功能"),
+            self
+        )
 
     def __init_logger(self):
         log_path = self.app_root/"logs" / (datetime.datetime.strftime(
