@@ -19,7 +19,7 @@ class MessageEvent(EventBase):
         self.post_type = context["post_type"]
         self.message_id: int = context.get("message_id", None)
         self.user_id: int = context.get("user_id", None)
-        self.message = context.get("message", None)
+        self.message: Optional[str] = context.get("message", None)
         self.raw_message: str = context.get("raw_message", None)
         self.font: int = context.get("font", None)
 
@@ -274,6 +274,7 @@ class GroupInviteOrAddRequestEvent(RequestEvent):
         self.sub_type = GroupJoinType(context["sub_type"])
         self.approve: Optional[bool] = None
         self.reason: Optional[str] = None
+
 
     # def set_reply()
 EventCallback = Callable[[EventBase], None]

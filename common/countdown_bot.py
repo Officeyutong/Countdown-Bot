@@ -84,6 +84,7 @@ class CountdownBot(CQHttp):
         self.client = ClientWrapper(self.api_client.invoke)
         self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(
             self.api_client.invoke_async(x, y), loop=self.loop))
+        global LOGGER
         LOGGER = self.logger
 
     @property
@@ -294,6 +295,7 @@ class CountdownBot(CQHttp):
         # self.db_conn = sqlite3.connect("data.db", check_same_thread=False)
         self.__init_logger()
         self.logger.info("Starting Countdown-Bot 2")
+        self.logger.info(f"Base dir: {self.app_root}")
         self.__load_plugins()
         self.__init_events()
         commands_count = sum((
