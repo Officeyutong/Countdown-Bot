@@ -144,7 +144,7 @@ class CountdownBot(CQHttp):
 
     def __group_message_handler(self, context: dict) -> dict:
         evt = event.GroupMessageEvent(context)
-        self.logger.debug(f"Handling group message {context}")
+        self.logger.info(f"Handling group message {context}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"group:{evt.group_id}", current_chat_type=ChatType.group
         ):
@@ -157,7 +157,7 @@ class CountdownBot(CQHttp):
 
     def __private_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.PrivateMessageEvent(context)
-        self.logger.debug(f"Handling private message {context}")
+        self.logger.info(f"Handling private message {context}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"private:{evt.user_id}", current_chat_type=ChatType.private
         ):
@@ -171,7 +171,7 @@ class CountdownBot(CQHttp):
 
     def __discuss_message_handler(self, context: dict) -> Optional[dict]:
         evt = event.DiscussMessageEvent(context)
-        self.logger.debug(f"Handling discuss message {context}")
+        self.logger.info(f"Handling discuss message {context}")
         # self.logger.info(f"Processing message event - discuss_id: {evt.discuss_id} user_id: {evt.user_id}")
         if not self.handle_command(
             evt=evt, context=context, cooldown_identifier=f"discuss:{evt.discuss_id}", current_chat_type=ChatType.discuss
