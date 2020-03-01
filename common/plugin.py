@@ -35,7 +35,7 @@ class Plugin:
                  plugin_id: str,
                  plugin_meta: PluginMeta,
                  bot: Any,
-                 config: Optional[ConfigBase]
+                 config: Optional[ConfigBase] = None
                  ):
         """
         此函数不应由用户进行调用。

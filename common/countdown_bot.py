@@ -15,7 +15,7 @@ from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 from .api_client.api import ClientWrapper  # type: ignore
 from .api_client.async_api_client import AsyncHTTPAPIClient  # type: ignore
-
+from .base_commands import *
 import concurrent
 import sys
 import os
@@ -252,6 +252,16 @@ class CountdownBot(CQHttp):
             plugin.on_enable()
             self.plugins.append(plugin)
             self.logger.info(f"Loaded {plugin_id} successfully")
+            self.base_plugin_wrapper = Plugin(
+                self.event_manager,
+                self.command_manager,
+                self.state_manager,
+                self.schedule_loop_manager,
+                self.app_root,
+                "<base>",
+                PluginMeta("officeyutong", 2.0, "Bot内置功能"),
+                self
+            )
 
     def __init_logger(self):
         log_path = self.app_root/"logs" / (datetime.datetime.strftime(
@@ -312,11 +322,12 @@ class CountdownBot(CQHttp):
         self.loop_thread = Thread(
             target=lambda: self.loop.run_forever())
         self.input_thread = Thread(target=self.input_handler)
+
         self.command_manager.register_command(Command(
             plugin_id="<base>",
             command_name="stop",
-            handler=self.__console_stop_command,
-            plugin=None,
+            handler=console_stop_command,
+            plugin=self.base_plugin_wrapper,
             help_string="关闭Bot",
             available_chats=None,
             alias=None,
@@ -325,8 +336,8 @@ class CountdownBot(CQHttp):
         self.command_manager.register_command(Command(
             plugin_id="<base>",
             command_name="help",
-            handler=self.__console_help_command,
-            plugin=None,
+            handler=console_help_command,
+            plugin=self.base_plugin_wrapper,
             help_string="查看帮助",
             available_chats=None,
             alias=None,
@@ -334,19 +345,9 @@ class CountdownBot(CQHttp):
         ))
         self.command_manager.register_command(Command(
             plugin_id="<base>",
-            command_name="post",
-            handler=self.__console_post_message_event,
-            plugin=None,
-            help_string="模拟发送MessageEvent | post 消息内容",
-            available_chats=None,
-            alias=None,
-            is_console=True
-        ))
-        self.command_manager.register_command(Command(
-            plugin_id="<base>",
             command_name="help",
-            handler=self.__help_command,
-            plugin=None,
+            handler=help_command,
+            plugin=self.base_plugin_wrapper,
             help_string="查看帮助 | help [插件ID(可选)]",
             available_chats={ChatType.discuss,
                              ChatType.private, ChatType.group},
@@ -356,8 +357,8 @@ class CountdownBot(CQHttp):
         self.command_manager.register_command(Command(
             plugin_id="<base>",
             command_name="status",
-            handler=self.__status_command,
-            plugin=None,
+            handler=status_command,
+            plugin=self.base_plugin_wrapper,
             help_string="查看Bot运行状态",
             available_chats={ChatType.discuss,
                              ChatType.private, ChatType.group},
@@ -367,8 +368,8 @@ class CountdownBot(CQHttp):
         self.command_manager.register_command(Command(
             plugin_id="<base>",
             command_name="plugins",
-            handler=self.__plugins_command,
-            plugin=None,
+            handler=plugins_command,
+            plugin=self.base_plugin_wrapper,
             help_string="查看插件列表",
             available_chats={ChatType.discuss,
                              ChatType.private, ChatType.group},
@@ -378,8 +379,8 @@ class CountdownBot(CQHttp):
         self.command_manager.register_command(Command(
             plugin_id="<base>",
             command_name="about",
-            handler=self.__about_command,
-            plugin=None,
+            handler=about_command,
+            plugin=self.base_plugin_wrapper,
             help_string="关于",
             available_chats={ChatType.discuss,
                              ChatType.private, ChatType.group},
@@ -472,7 +473,7 @@ class CountdownBot(CQHttp):
         future.add_done_callback(self.__future_exception_handler)
         return future
 
-    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, /, *args, **kwargs):
+    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, / , *args, **kwargs):
         """
         提交同步任务至线程池
         @param fn: Callable对象
@@ -487,57 +488,6 @@ class CountdownBot(CQHttp):
         if handle_exception:
             future.add_done_callback(self.__future_exception_handler)
         return future
-
-    def __console_stop_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        self.stop()
-
-    def __console_help_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        for k, v in sorted(self.command_manager.console_commands.items(), key=lambda x: x[0]):
-            self.logger.info(f"{k} --- {v.help_string}")
-
-    def __console_post_message_event(self, plugin, args: List[str], raw_string, context, evt):
-        self.event_manager.process_event(
-            MessageEvent({"message": args[0], "post_type": "group"})
-        )
-
-    def __help_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        from io import StringIO
-        buf = StringIO()
-        command_list: List[Command] = []
-        chat_type = ChatType(context["message_type"])
-        if not args:
-            for value in self.command_manager.commands.values():
-                for item in value.values():
-                    if chat_type in item.available_chats:
-                        command_list.append(item)
-        else:
-            if args[0] in self.command_manager.commands:
-                for item in self.command_manager.commands[args[0]].values():
-                    if chat_type in item.available_chats:
-                        command_list.append(item)
-            else:
-                self.client.send(context, "此插件未注册指令")
-        command_list.sort(key=lambda x: x.command_name)
-        for cmd in command_list:
-            buf.write(
-                f"{cmd.command_name}{'['+','.join(cmd.alias)+']' if cmd.alias else ''} --- {cmd.help_string}\n")
-        self.send(context, buf.getvalue())
-
-    def __status_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        self.send(context, self.state_manager.generate_message())
-
-    def __about_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        self.send(context, "https://gitee.com/yutong_java/Countdown-Bot")
-        self.send(context, "by MikuNotFoundException")
-
-    def __plugins_command(self, plugin, args: List[str], raw_string: str, context, evt):
-        from io import StringIO
-        buf = StringIO()
-        for plugin in self.plugins:
-            meta = plugin.plugin_meta
-            buf.write(
-                f"{plugin.plugin_id} {meta.version}\n作者: {meta.author}\n描述: {meta.description}\n\n")
-        self.send(context, buf.getvalue())
 
     def __fill_dict(self, dic: dict, evt, val):
         if getattr(evt, val) is not None:
