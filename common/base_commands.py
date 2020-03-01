@@ -12,7 +12,6 @@ def console_help_command(plugin, args: List[str], raw_string: str, context, evt)
         plugin.bot.logger.info(f"{k} --- {v.help_string}")
 
 
-
 def help_command(plugin, args: List[str], raw_string: str, context, evt):
     from io import StringIO
     buf = StringIO()
@@ -42,8 +41,8 @@ def status_command(plugin, args: List[str], raw_string: str, context, evt):
 
 
 def about_command(plugin, args: List[str], raw_string: str, context, evt):
-    plugin.bot.send(context, "https://gitee.com/yutong_java/Countdown-Bot")
-    plugin.bot.send(context, "by MikuNotFoundException")
+    plugin.bot.send(context, """Countdown-Bot 2 by MikuNotFoundException
+https://gitee.com/yutong_java/Countdown-Bot""")
 
 
 def plugins_command(plugin, args: List[str], raw_string: str, context, evt):

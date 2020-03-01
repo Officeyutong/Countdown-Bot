@@ -4,6 +4,7 @@
 
 QQ群多功能Bot。
 
+**项目已经更改架构，旧项目地址https://gitee.com/yutong_java/CountdownBot-Old**
 
 
 #### 安装教程
