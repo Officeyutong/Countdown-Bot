@@ -10,6 +10,7 @@ import io
 import asyncio
 import base64
 import numpy
+import re
 from .data import MATH_NAMES
 
 
@@ -26,6 +27,13 @@ class MathPluginConfig(ConfigBase):
 
 
 class MathPlugin(Plugin):
+    def process_string(self, string: str):
+        pattern = re.compile(r'&#(.*?);')
+        for item in pattern.findall(string):
+            string = string.replace("&#{};".format(
+                item), bytes([int(item)]).decode("utf-8"))
+        return string
+
     def on_enable(self):
         self.bot: CountdownBot
         self.config: MathPluginConfig
@@ -114,7 +122,7 @@ LaTeX:
 
     def solve(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         try:
-            unknown, equations, *_ = args
+            unknown, equations, *_ = (self.process_string(x) for x in args)
         except:
             self.bot.client.send(context, "请输入正确的参数格式")
             raise
@@ -122,20 +130,20 @@ LaTeX:
         self.bot.client.send(context, self.make_result(result))
 
     def integrate(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        func = raw_string.replace("integrate ", "")
+        func = self.process_string(raw_string.replace("integrate ", ""))
         x = sympy.symbols("x")
         result = sympy.integrate(func, x)
         self.bot.client.send(context, self.make_result(result))
 
     def differentiate(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        func = raw_string.replace("diff ", "")
+        func = self.process_string(raw_string.replace("diff ", ""))
         x = sympy.symbols("x")
         result = sympy.diff(func, x)
         self.bot.logger.info(f"Diff: {func}\n result: {result}")
         self.bot.client.send(context, self.make_result(result))
 
     def seires(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        x0, *secs = args
+        x0, *secs = (self.process_string(x) for x in args)
         func = " ".join(secs)
         x = sympy.symbols("x")
         result = sympy.series(func, x0=sympy.simplify(x0), n=10, x=x)
@@ -143,7 +151,7 @@ LaTeX:
 
     def plot(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         try:
-            begin, end, *func_all = args
+            begin, end, *func_all = (self.process_string(x) for x in args)
             begin = float(begin)
             end = float(end)
             funcs = " ".join(func_all).split(",")
@@ -167,7 +175,7 @@ LaTeX:
 
     def plotpe(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         try:
-            begin, end, *func_all = args
+            begin, end, *func_all = (self.process_string(x) for x in args)
             funcs = " ".join(func_all).split(",")
             if len(funcs) > self.config.FUNCTION_COUNT_LIMIT:
                 self.bot.client.send(context, "绘制函数过多")
