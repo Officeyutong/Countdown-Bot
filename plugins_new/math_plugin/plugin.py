@@ -210,7 +210,7 @@ LaTeX:
     def command_render_latex(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         to_render = raw_string.replace("latex ", "", 1)
         self.bot.client.send(
-            context, f"[CQ:image,file=base64://{self.encode_bytes(self.render_latex(to_render))}]")
+            context, f"[CQ:image,file=base64://{self.encode_bytes(self.render_latex(self.process_string(to_render)))}]")
 
 
 def get_plugin_class():
