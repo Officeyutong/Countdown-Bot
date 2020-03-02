@@ -111,6 +111,7 @@ class ZxhDmxPlugin(Plugin):
         if group not in self.games:
             self.games[group] = Game(self.bot, group, self)
         game = self.games[group]
+        self.logger.info(f"ZXHDMX: processing message {evt}")
         if player in game.players and evt.message.split(" ")[0] in self.commands:
             command, *args = evt.message.split(" ")
             if not hasattr(self, f"zxh_command_{command}"):
@@ -181,3 +182,12 @@ class ZxhDmxPlugin(Plugin):
 
     def zxh_command_接受(self, event: GroupMessageEvent, game: Game):
         game.accept(event.sender.user_id)
+
+    def zxh_command_提醒(self, event: GroupMessageEvent, game: Game):
+        game.notify_non_played()
+
+    def zxh_command_跳过(self, event: GroupMessageEvent, game: Game):
+        game.skip_non_played()
+
+    def zxh_command_终止(self, event: GroupMessageEvent, game: Game):
+        game.force_stop()
