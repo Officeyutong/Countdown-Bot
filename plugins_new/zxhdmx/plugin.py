@@ -111,7 +111,7 @@ class ZxhDmxPlugin(Plugin):
         if group not in self.games:
             self.games[group] = Game(self.bot, group, self)
         game = self.games[group]
-        self.logger.info(f"ZXHDMX: processing message {evt}")
+        # self.logger.info(f"ZXHDMX: processing message {evt}")
         if player in game.players and evt.message.split(" ")[0] in self.commands:
             command, *args = evt.message.split(" ")
             if not hasattr(self, f"zxh_command_{command}"):
