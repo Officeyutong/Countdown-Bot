@@ -6,8 +6,11 @@ from common.loop import TimeTuple
 from common.command import ChatType
 from common.event import MessageEvent
 from typing import List
+
+import urllib
 import base64
-from aip import AipSpeech
+import aiohttp
+import json
 
 
 class ReadConfig(ConfigBase):
@@ -25,34 +28,46 @@ class ReadConfig(ConfigBase):
 
 
 class ReadPlugin(Plugin):
-    def get_voice(self, text: str) -> str:
-        result = self.client.synthesis(text, 'zh', 1, {
-            'vol': self.config.VOLUME,
-            'per': 4,
-            'spd': self.config.SPEED
-        })
-        if isinstance(result, dict):
-            return ""
-        else:
-            return base64.encodebytes(result).decode().replace("\n", "")
+    async def get_voice(self, text: str, token: str) -> bytes:
+        async with self.aioclient.post("https://tsn.baidu.com/text2audio",
+                                       data=f"tex={urllib.parse.quote(urllib.parse.quote(text))}\
+&ctp=1&tok={token}&cuid=qwqqwqqwqqwq&spd={self.config.SPEED}\
+&per=4&vol={self.config.VOLUME}&lan=zh") as resp:
+            resp: aiohttp.ClientResponse
+            result = await resp.read()
+        return result
 
-    def command_read(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
-        def wrapper():
-            text = " ".join(args)
-            if len(text) > self.config.MAX_STRING_LENGTH:
-                self.bot.send(context, "字符串过长")
-            else:
-                b64voice = self.get_voice(text)
-                if b64voice:
-                    self.bot.send(
-                        context, f"[CQ:record,file=base64://{b64voice}]")
-                else:
-                    self.bot.send(context, "生成错误，请检查是否含有非法字符")
-        self.bot.submit_multithread_task(wrapper)
+    async def get_token(self) -> str:
+        async with self.aioclient.get("https://openapi.baidu.com/oauth/2.0/token", params={
+            "grant_type": "client_credentials",
+            "client_id": self.config.API_KEY,
+            "client_secret": self.config.SECRET_KEY
+        }) as resp:
+            resp: aiohttp.ClientResponse
+            result = await resp.json()
+        if "access_token" in result:
+            return result['access_token']
+        else:
+            return "xxx"
+
+    async def command_read(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
+        text = " ".join(args)
+        if len(text) > self.config.MAX_STRING_LENGTH:
+            await self.bot.client_async.send(context, "字符串过长")
+        else:
+            token = await self.get_token()
+            data = await self.get_voice(text, token)
+            try:
+                info = json.loads(data.decode())
+            except Exception:
+                b64voice = base64.encodebytes(data).decode().replace('\n', '')
+                await self.bot.client_async.send(
+                    context, f"[CQ:record,file=base64://{b64voice}]")
+                return
+            await self.bot.client_async.send(context, f"Error: {info}")
 
     def on_enable(self):
-        self.client = AipSpeech(
-            self.config.APP_ID, self.config.API_KEY, self.config.SECRET_KEY)
+        self.aioclient = aiohttp.ClientSession()
         self.config: ReadConfig
         self.bot: CountdownBot
         self.register_command_wrapped(
@@ -60,6 +75,7 @@ class ReadPlugin(Plugin):
             command_handler=self.command_read,
             help_string="文字转语音",
             chats={ChatType.discuss, ChatType.group, ChatType.private},
+            is_async=True
         )
 
 
@@ -73,5 +89,5 @@ def get_config_class():
 
 def get_plugin_meta():
     return PluginMeta(
-        "Antares", 2.0, "文字转语音"
+        "Antares", 3.0, "文字转语音"
     )

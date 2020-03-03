@@ -5,10 +5,10 @@ from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
 from common.event import MessageEvent
-import aiohttp
-import urllib
 from typing import Dict, List
 from io import StringIO
+
+import aiohttp
 
 
 class WeatherConfig(ConfigBase):
@@ -19,7 +19,7 @@ class WeatherConfig(ConfigBase):
 class WeatherPlugin(Plugin):
     async def get_data(self, local: str, type1: str, type2: str) -> dict:
         async with self.aioclient.get(f"https://free-api.heweather.net/s6/{type1}/{type2}", params={
-            "location": urllib.parse.quote(local),
+            "location": local,
             "key": self.config.APP_KEY,
             "lang": "zh"
         }) as resp:
