@@ -29,10 +29,16 @@ class ReadConfig(ConfigBase):
 
 class ReadPlugin(Plugin):
     async def get_voice(self, text: str, token: str) -> bytes:
-        async with self.aioclient.post("https://tsn.baidu.com/text2audio",
-                                       data=f"tex={urllib.parse.quote(urllib.parse.quote(text))}\
-&ctp=1&tok={token}&cuid=qwqqwqqwqqwq&spd={self.config.SPEED}\
-&per=4&vol={self.config.VOLUME}&lan=zh") as resp:
+        async with self.aioclient.post("https://tsn.baidu.com/text2audio",data={
+            "tex":urllib.parse.quote(urllib.parse.quote(text)),
+            "tok":token,
+            "cuid":"qwqqwqqwq",
+            "ctp": 1,
+            "spd":self.config.SPEED,
+            "per":4,
+            "vol":self.config.VOLUME,
+            "lan":"zh"
+        }) as resp:
             resp: aiohttp.ClientResponse
             result = await resp.read()
         return result
@@ -45,17 +51,18 @@ class ReadPlugin(Plugin):
         }) as resp:
             resp: aiohttp.ClientResponse
             result = await resp.json()
-        if "access_token" in result:
-            return result['access_token']
-        else:
-            return "xxx"
+        return result['access_token']
 
     async def command_read(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
         text = " ".join(args)
         if len(text) > self.config.MAX_STRING_LENGTH:
             await self.bot.client_async.send(context, "字符串过长")
         else:
-            token = await self.get_token()
+            try:
+                token = await self.get_token()
+            except Exception:
+                self.logger.error("Read: 获取token失败,请检查API_KEY和SECRET_KEY")
+                return
             data = await self.get_voice(text, token)
             try:
                 info = json.loads(data.decode())
