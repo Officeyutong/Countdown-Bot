@@ -30,7 +30,7 @@ class ReadConfig(ConfigBase):
 class ReadPlugin(Plugin):
     async def get_voice(self, text: str, token: str) -> bytes:
         async with self.aioclient.post("https://tsn.baidu.com/text2audio",data={
-            "tex":urllib.parse.quote(urllib.parse.quote(text)),
+            "tex":urllib.parse.quote(text),
             "tok":token,
             "cuid":"qwqqwqqwq",
             "ctp": 1,
