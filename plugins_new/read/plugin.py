@@ -29,15 +29,15 @@ class ReadConfig(ConfigBase):
 
 class ReadPlugin(Plugin):
     async def get_voice(self, text: str, token: str) -> bytes:
-        async with self.aioclient.post("https://tsn.baidu.com/text2audio",data={
-            "tex":urllib.parse.quote(text),
-            "tok":token,
-            "cuid":"qwqqwqqwq",
+        async with self.aioclient.post("https://tsn.baidu.com/text2audio", data={
+            "tex": urllib.parse.quote(text),
+            "tok": token,
+            "cuid": "qwqqwqqwq",
             "ctp": 1,
-            "spd":self.config.SPEED,
-            "per":4,
-            "vol":self.config.VOLUME,
-            "lan":"zh"
+            "spd": self.config.SPEED,
+            "per": 4,
+            "vol": self.config.VOLUME,
+            "lan": "zh"
         }) as resp:
             resp: aiohttp.ClientResponse
             result = await resp.read()
