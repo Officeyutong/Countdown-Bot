@@ -42,7 +42,8 @@ def status_command(plugin, args: List[str], raw_string: str, context, evt):
 
 def about_command(plugin, args: List[str], raw_string: str, context, evt):
     plugin.bot.send(context, """Countdown-Bot 2 by MikuNotFoundException
-https://gitee.com/yutong_java/Countdown-Bot""")
+https://gitee.com/yutong_java/Countdown-Bot
+https://github.com/Officeyutong/Countdown-Bot""")
 
 
 def plugins_command(plugin, args: List[str], raw_string: str, context, evt):
