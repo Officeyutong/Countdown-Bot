@@ -108,7 +108,7 @@ class MusicGenPlugin(Plugin):
             self.generate_music(f"bpm:{bpm} "+result, context)
         self.bot.submit_multithread_task(wrapper)
 
-    def noteconvert(self, note_string: str, context: dict):
+    def noteconvert(self, note_string: str):
         major = "C"
         tracks: List[List[str]] = []
         for track in note_string.split("|"):
@@ -139,7 +139,9 @@ class MusicGenPlugin(Plugin):
                 filtered.extend(self.load_from_ubntupastebin(url).split())
             else:
                 filtered.append(item)
-        self.noteconvert(" ".join(filtered), context)
+
+        self.bot.client.send(context, self.noteconvert(
+            " ".join(filtered), context))
 
     def command_generate_music(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         def wrapper():
