@@ -103,7 +103,6 @@ class MusicGenPlugin(Plugin):
                 (x for x in filtered if not x.startswith("major") and not x.startswith("bpm")))
             result = self.noteconvert(
                 f"major:{major} "+note_string,
-                context,
             )
             self.generate_music(f"bpm:{bpm} "+result, context)
         self.bot.submit_multithread_task(wrapper)
