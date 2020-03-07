@@ -141,7 +141,9 @@ class MusicGenPlugin(Plugin):
                 filtered.append(item)
 
         self.bot.client.send(context, self.noteconvert(
-            " ".join(filtered)))
+            " ".join(filtered)
+        )
+        )
 
     def command_generate_music(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         def wrapper():
