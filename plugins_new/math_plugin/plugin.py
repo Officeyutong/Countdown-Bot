@@ -93,6 +93,14 @@ class MathPlugin(Plugin):
             chats={ChatType.group},
             is_async=True
         )
+        self.register_command_wrapped(
+            command_name="factor",
+            command_handler=self.time_limit_wrapper(
+                self.factor, "因式分解运行超时", self.config.DEFUALT_TIMEOUT),
+            help_string="分解因式 | factor 多项式 (多项式中不得含有空格)",
+            chats={ChatType.group},
+            is_async=True
+        )
 
     def time_limit_wrapper(self, func,  err_msg: str, timeout):
         async def wrapper(*args, **kwargs):
@@ -127,6 +135,11 @@ LaTeX:
             self.bot.client.send(context, "请输入正确的参数格式")
             raise
         result = sympy.solve(equations.split(","), unknown.split(","))
+        self.bot.client.send(context, self.make_result(result))
+
+    def factor(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
+        func = self.process_string(raw_string.replace("factor ", ""))
+        result = sympy.factor(func)
         self.bot.client.send(context, self.make_result(result))
 
     def integrate(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
