@@ -30,7 +30,7 @@ class OIWikiPlugin(Plugin):
         try:
             result = await self.search_oiwiki(keywords)
         except Exception:
-            await self.bot.client_async.send(context,"连接查询服务器出错")
+            await self.bot.client_async.send(context, "连接查询服务器出错")
             return
         buf = StringIO()
         buf.write(f"查询到{len(result)}条相关内容：\n")
