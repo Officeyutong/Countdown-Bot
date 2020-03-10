@@ -34,6 +34,10 @@ class MusicGenConfig(ConfigBase):
     DOWNLOAD_TIMEOUT = 3*1000*60
     # 所存储的最多的文件数
     MAX_STORING_FILES = 10
+    # 禁用的群
+    DISABLE_GROUPS: List[int] = [
+        441254450
+    ]
 
 
 class MusicGenPlugin(Plugin):
@@ -83,6 +87,10 @@ class MusicGenPlugin(Plugin):
         return flask.send_file(buf, as_attachment=True, attachment_filename=f"{token}.mp3", conditional=True)
 
     def command_convert_play(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
+        if evt.group_id in self.config.DISABLE_GROUPS:
+            self.bot.client.send(context, "本群禁止使用该指令")
+            return
+
         def wrapper():
             filtered: List[str] = []
             for item in " ".join(args).split():
@@ -130,6 +138,10 @@ class MusicGenPlugin(Plugin):
         return buf.getvalue()
 
     def command_noteconvert(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
+        if evt.group_id in self.config.DISABLE_GROUPS:
+            self.bot.client.send(context, "本群禁止使用该指令")
+            return
+
         filtered: List[str] = []
         for item in " ".join(args).split():
             item = item.strip()
@@ -144,7 +156,11 @@ class MusicGenPlugin(Plugin):
         )
         )
 
-    def command_generate_music(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
+    def command_generate_music(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if evt.group_id in self.config.DISABLE_GROUPS:
+            self.bot.client.send(context, "本群禁止使用该指令")
+            return
+
         def wrapper():
             filtered: List[str] = []
             for item in " ".join(args).split():
