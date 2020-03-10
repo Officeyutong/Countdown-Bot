@@ -34,7 +34,7 @@ class OIWikiPlugin(Plugin):
             return
         buf = StringIO()
         buf.write(f"查询到{len(result)}条相关内容：\n")
-        for index, item in enumerate(result):
+        for item in result:
             buf.write(f"{item['title']}: https://oi-wiki.org{item['url']}\n\n")
         await self.bot.client_async.send(context, buf.getvalue())
 
