@@ -3,4 +3,9 @@ FROM python
 LABEL maintainer="814980678@qq.com"
 RUN pip3 install pip -U
 RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip3 install numpy && pip3 install sympy && pip3 install requests && pip3 install scipy
+RUN pip3 install numpy sympy scipy matplotlib
+
+COPY sources.list /etc/apt/
+RUN apt update 
+RUN apt install dvipng -y
+RUN apt install texlive-full -y
