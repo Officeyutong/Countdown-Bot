@@ -193,13 +193,13 @@ class MathPlugin(Plugin):
 
     def make_result(self, result: dict) -> str:
         return f"""Python表达式:
-{result["python_expr"]}
+{result.python_expr}
 
 LaTeX:
-{result["latex"]}
+{result.latex}
 
 图像:
-[CQ:image,file=base64://{self.encode_bytes(result["image"])}]
+[CQ:image,file=base64://{self.encode_bytes(result.image)}]
 """
 
     async def solve(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
