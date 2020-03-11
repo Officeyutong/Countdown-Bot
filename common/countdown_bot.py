@@ -45,6 +45,9 @@ class CountdownBotConfig(ConfigBase):
     SERVER_URL = "http://ecs.zhehao.top"
     LOGGING_LEVEL = logging.INFO
     MAX_THREAD_EXECUTORS = 10
+    BLACKLIST_USERS = [
+
+    ]  # 不处理来自这些用户的指令
 
 
 class CountdownBot(CQHttp):
@@ -108,6 +111,9 @@ class CountdownBot(CQHttp):
 
         @return: 这个事件是否为一次命令调用
         """
+        if evt.user_id in self.config.BLACKLIST_USERS:
+            # 忽略黑名单用户的消息
+            return False
         done = False
         for prefix in self.config.COMMAND_PREFIX:
             if evt.raw_message.startswith(prefix):
