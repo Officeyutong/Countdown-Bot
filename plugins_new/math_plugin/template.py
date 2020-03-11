@@ -1,31 +1,6 @@
-import numpy as np
-MATH_NAMES = {
-    "sin": np.sin,
-    "cos": np.cos,
-    "tan": np.tan,
-    "exp": np.exp,
-    "floor": np.floor,
-    "around": np.around,
-    "log": np.log,
-    "log10": np.log10,
-    "log2": np.log2,
-    "sinh": np.sinh,
-    "cosh": np.cosh,
-    "tanh": np.tanh,
-    "arcsin": np.arcsin,
-    "arccos": np.arccos,
-    "arctan": np.arctan,
-    "arcsinh": np.arcsinh,
-    "arccosh": np.arccosh,
-    "arctanh": np.arctanh,
-    "abs": np.abs,
-    "sqrt": np.sqrt,
-    "log1p": np.log1p,
-    "sign": np.sign,
-    "ceil": np.ceil,
-    "modf": np.modf,
-    "pi": np.pi
-}
+
+
+import sys
 
 
 def render_latex(formula: str) -> bytes:
@@ -39,6 +14,8 @@ def render_latex(formula: str) -> bytes:
 
 def make_result1(expr):
     import sympy
+    import sys
+    # print("making result", file=sys.stderr,flush=True)
     return {
         "latex": sympy.latex(expr),
         "python_expr": str(expr),
@@ -62,7 +39,10 @@ def integrate(func):
 
 
 def differentiate(func):
+    # import sys
+    # print("loading sympy", file=sys.stderr,flush=True)
     import sympy
+    # print("sympy loaded", file=sys.stderr,flush=True)
     x = sympy.Symbol("x")
     return make_result1(sympy.diff(func, x))
 
@@ -74,6 +54,34 @@ def series(x0, func):
 
 
 def plot(begin, end, funcs):
+    import numpy as np
+    MATH_NAMES = {
+        "sin": np.sin,
+        "cos": np.cos,
+        "tan": np.tan,
+        "exp": np.exp,
+        "floor": np.floor,
+        "around": np.around,
+        "log": np.log,
+        "log10": np.log10,
+        "log2": np.log2,
+        "sinh": np.sinh,
+        "cosh": np.cosh,
+        "tanh": np.tanh,
+        "arcsin": np.arcsin,
+        "arccos": np.arccos,
+        "arctan": np.arctan,
+        "arcsinh": np.arcsinh,
+        "arccosh": np.arccosh,
+        "arctanh": np.arctanh,
+        "abs": np.abs,
+        "sqrt": np.sqrt,
+        "log1p": np.log1p,
+        "sign": np.sign,
+        "ceil": np.ceil,
+        "modf": np.modf,
+        "pi": np.pi
+    }
     import numpy
     import io
     import matplotlib.pyplot as plt
@@ -89,6 +97,34 @@ def plot(begin, end, funcs):
 
 
 def plotpe(begin, end, funcs):
+    import numpy as np
+    MATH_NAMES = {
+        "sin": np.sin,
+        "cos": np.cos,
+        "tan": np.tan,
+        "exp": np.exp,
+        "floor": np.floor,
+        "around": np.around,
+        "log": np.log,
+        "log10": np.log10,
+        "log2": np.log2,
+        "sinh": np.sinh,
+        "cosh": np.cosh,
+        "tanh": np.tanh,
+        "arcsin": np.arcsin,
+        "arccos": np.arccos,
+        "arctan": np.arctan,
+        "arcsinh": np.arcsinh,
+        "arccosh": np.arccosh,
+        "arctanh": np.arctanh,
+        "abs": np.abs,
+        "sqrt": np.sqrt,
+        "log1p": np.log1p,
+        "sign": np.sign,
+        "ceil": np.ceil,
+        "modf": np.modf,
+        "pi": np.pi
+    }
     import numpy
     import io
     import matplotlib.pyplot as plt
@@ -105,6 +141,9 @@ def plotpe(begin, end, funcs):
     return {"latex": "", "python_expr": "", "image": buf.getvalue()}
 
 
+# print("started..", file=sys.stderr,flush=True)
 output = {"latex": "", "python_expr": "", "image": b""}
 {CODE}
-print(output)
+# print(output)
+with open("output.txt", "w") as f:
+    f.write(str(output))

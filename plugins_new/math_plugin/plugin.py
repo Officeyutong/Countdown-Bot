@@ -34,8 +34,8 @@ class MathPluginConfig(ConfigBase):
     MATPLOT_RANGE_LENGTH = 30
     # 画图函数数量限制
     FUNCTION_COUNT_LIMIT = 4
-    DEFUALT_TIMEOUT = 30
-    DOCKER_IMAGE = ""  # 运行所使用的docker镜像名
+    DEFUALT_TIMEOUT = 30*1000  # ms
+    DOCKER_IMAGE = "python"  # 运行所使用的docker镜像名
 
 
 class MathPlugin(Plugin):
@@ -43,28 +43,49 @@ class MathPlugin(Plugin):
         self.bot.logger.info(f"Running...")
         client = docker.from_env()
         temp_dir = pathlib.Path(tempfile.mkdtemp())
+        self.logger.debug(temp_dir)
         src_file = "run.py"
         async with aiofiles.open(temp_dir/src_file, "w") as f:
-            await f.write(self.template.replace("{REPLACE}", code))
-        command = f"python3.8 {src_file}"
+            await f.write(self.template.replace("{CODE}", code))
+        command = f"python3.8 -O {src_file}"
         container = client.containers.run(
             image=self.config.DOCKER_IMAGE,
-            command=f"sh -c '{command}'",
+            command=f"sh -c '{command} 2> err.txt'",
             stdin_open=True,
             detach=True,
             tty=True,
             network_mode="none",
             working_dir="/temp",
             volumes={str(temp_dir): {"bind": "/temp", "mode": "rw"}},
-            mem_limit="50m",
-            memswap_limit="50m",
+            mem_limit="128m",
+            memswap_limit="128m",
             oom_kill_disable=True,
-            nano_cpus=int(0.4*1/1e-9)
+            # nano_cpus=int(0.8*1/1e-9)
         )
         try:
             await asyncio.wait_for(asyncio.wrap_future(
                 self.bot.submit_multithread_task(container.wait)
             ), timeout=self.config.DEFUALT_TIMEOUT/1000)
+            try:
+                async with aiofiles.open(temp_dir/"output.txt", "r") as f:
+                    docker_output = await f.read()
+            except FileNotFoundError as err:
+                await self.bot.client_async.send(context, str(err))
+                self.logger.exception(err)
+            async with aiofiles.open(temp_dir/"err.txt", "r") as f:
+                stderr = await f.read()
+            if stderr.strip():
+                await self.bot.client_async.send(context, stderr[:1000])
+                self.logger.error(stderr)
+            output: dict = ast.literal_eval(docker_output)
+            if not docker_output:
+                raise Exception("Program exited abnormally.")
+            container.remove()
+            return ExecuteResult(
+                python_expr=output["python_expr"],
+                latex=output["latex"],
+                image=output["image"]
+            )
         except asyncio.TimeoutError as ex0:
             try:
                 container.kill()
@@ -72,19 +93,10 @@ class MathPlugin(Plugin):
             except Exception as ex:
                 self.bot.logger.exception(ex)
             raise ex0
-        import shutil
-        shutil.rmtree(temp_dir)
-        try:
-            docker_output = container.logs().decode()
-            output: dict = ast.literal_eval(docker_output)
-        except:
-            await self.bot.client_async.send(context, docker_output[:500])
-            self.logger.error(docker_output)
-        return ExecuteResult(
-            python_expr=output["python_expr"],
-            latex=output["latex"],
-            image=output["image"]
-        )
+        finally:
+            pass
+            import shutil
+            shutil.rmtree(temp_dir)
 
     def process_string(self, string: str):
         pattern = re.compile(r'&#(.*?);')
@@ -196,32 +208,27 @@ LaTeX:
         except:
             self.bot.client.send(context, "请输入正确的参数格式")
             raise
-        TEMPLATE = f"""from sympy import *
-output=solve("{unknown}","{equations}")"""
+        TEMPLATE = f"""output=solve("{unknown}","{equations}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(context, self.make_result(result))
 
     async def factor(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        TEMPLATE = f"""from sympy import *
-output=factor("{self.process_string(args[0])}")"""
+        TEMPLATE = f"""output=factor("{self.process_string(args[0])}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(context, self.make_result(result))
 
     async def integrate(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        TEMPLATE = f"""from sympy import *
-output=integrate("{self.process_string(args[0])}")"""
+        TEMPLATE = f"""output=integrate("{self.process_string(args[0])}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(context, self.make_result(result))
 
     async def differentiate(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        TEMPLATE = f"""from sympy import *
-output=differentiate("{self.process_string(args[0])}")"""
+        TEMPLATE = f"""output=differentiate("{self.process_string(args[0])}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(context, self.make_result(result))
 
     async def series(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        TEMPLATE = f"""from sympy import *
-output=series("{self.process_string(args[0])}","{self.process_string(args[1])}")"""
+        TEMPLATE = f"""output=series("{self.process_string(args[0])}","{self.process_string(args[1])}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(context, self.make_result(result))
 
@@ -237,7 +244,7 @@ output=series("{self.process_string(args[0])}","{self.process_string(args[1])}")
             TEMPLATE = f"""output=plot({begin},{end},{funcs})"""
             result = await self.execute_in_docker(TEMPLATE, context)
             await self.bot.client_async.send(
-                context, f"[CQ:image,file=base64://{self.encode_bytes(result['image'])}]")
+                context, f"[CQ:image,file=base64://{self.encode_bytes(result.image)}]")
         except Exception as ex:
             await self.bot.client_async.send(context, str(ex))
             raise ex
@@ -255,7 +262,7 @@ output=series("{self.process_string(args[0])}","{self.process_string(args[1])}")
             TEMPLATE = f"""output=plotpe({begin},{end},{funcs})"""
             result = await self.execute_in_docker(TEMPLATE, context)
             await self.bot.client_async.send(
-                context, f"[CQ:image,file=base64://{self.encode_bytes(result['image'])}]")
+                context, f"[CQ:image,file=base64://{self.encode_bytes(result.image)}]")
         except Exception as ex:
             await self.bot.client_async.send(context, str(ex))
             raise ex
@@ -266,7 +273,7 @@ output=series("{self.process_string(args[0])}","{self.process_string(args[1])}")
         TEMPLATE = f"""output=render_latex("{to_render}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(
-            context, f"[CQ:image,file=base64://{self.encode_bytes(result['image'])}]")
+            context, f"[CQ:image,file=base64://{self.encode_bytes(result.image)}]")
 
 
 def get_plugin_class():
