@@ -60,7 +60,7 @@ class MathPlugin(Plugin):
             mem_limit="128m",
             memswap_limit="128m",
             oom_kill_disable=True,
-            # nano_cpus=int(0.8*1/1e-9)
+            nano_cpus=int(0.4*1/1e-9)
         )
         try:
             await asyncio.wait_for(asyncio.wrap_future(
