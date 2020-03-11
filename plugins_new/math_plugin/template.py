@@ -19,7 +19,7 @@ def make_result1(expr):
     return {
         "latex": sympy.latex(expr),
         "python_expr": str(expr),
-        "image": render_latex(sympy.latex(expr))
+        "image": render_latex(f"$${sympy.latex(expr)}$$")
     }
 
 
