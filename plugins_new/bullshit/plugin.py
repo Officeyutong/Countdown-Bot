@@ -27,7 +27,7 @@ class BullshitPlugin(Plugin):
 
     def shit(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         string = " ".join(args)[:500]
-        items = list(jieba.cut(string, cut_all=True))
+        items = list(jieba.cut(string))
         # print(items)
         random.shuffle(items)
         self.bot.client.send(context, "".join((x.strip()
