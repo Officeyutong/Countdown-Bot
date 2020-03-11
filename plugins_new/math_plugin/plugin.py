@@ -80,6 +80,8 @@ class MathPlugin(Plugin):
             output: dict = ast.literal_eval(docker_output)
             if not docker_output:
                 raise Exception("Program exited abnormally.")
+            self.bot.logger.info(type(output))
+            self.bot.logger.debug(output)
             container.remove()
             return ExecuteResult(
                 python_expr=output["python_expr"],
