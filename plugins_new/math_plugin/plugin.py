@@ -18,6 +18,7 @@ import docker
 import tempfile
 import ast
 import pathlib
+import html
 @dataclass
 class ExecuteResult:
     python_expr: str
@@ -100,11 +101,12 @@ class MathPlugin(Plugin):
             shutil.rmtree(temp_dir)
 
     def process_string(self, string: str):
-        pattern = re.compile(r'&#(.*?);')
-        for item in pattern.findall(string):
-            string = string.replace("&#{};".format(
-                item), bytes([int(item)]).decode("utf-8"))
-        return string
+        # pattern = re.compile(r'&#(.*?);')
+        # for item in pattern.findall(string):
+        #     string = string.replace("&#{};".format(
+        #         item), bytes([int(item)]).decode("utf-8"))
+        # return string
+        return html.unescape(string)
 
     def on_enable(self):
         self.bot: CountdownBot

@@ -11,6 +11,7 @@ import tempfile
 import pathlib
 import aiofiles
 import re
+import html
 
 
 class DockerRunnerConfig(ConfigBase):
@@ -45,10 +46,11 @@ class DockerRunnerConfig(ConfigBase):
 
 class DockerRunnerPlugin(Plugin):
     async def run_code(self, code: str, language_cfg: dict, context: dict, stdin: bytes = b"") -> str:
-        pattern = re.compile(r'&#(.*?);')
-        for item in pattern.findall(code):
-            code = code.replace("&#{};".format(
-                item), bytes([int(item)]).decode("utf-8"))
+        # pattern = re.compile(r'&#(.*?);')
+        # for item in pattern.findall(code):
+        #     code = code.replace("&#{};".format(
+        #         item), bytes([int(item)]).decode("utf-8"))
+        code = html.unescape(code)
         self.bot.logger.info(f"Running...")
         client = docker.from_env()
         temp_dir = pathlib.Path(tempfile.mkdtemp())
