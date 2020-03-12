@@ -18,6 +18,7 @@ QQ群多功能Bot。
 #### 使用说明
 
 - 安装requires.txt里的依赖
+- **注意:** 此Bot所需要的依赖之一(PySynth)并未在PyPi中提供，但是plugins_new/music_gen/PySynth目录下提供了副本，可以使用```py setup.py install```手动安装
 - HTTPAPI以HTTP形式上报数据
 - 参考common.countdown_bot.CountdownBotConfig类在Bot根目录下写自己的配置文件(config.py，使用全局常量来覆盖默认配置)
 
