@@ -5,11 +5,9 @@ from common.event import MessageEvent, GroupMessageEvent
 from common.command import ChatType
 from common.countdown_bot import CountdownBot
 from typing import List, Dict
-
+from io import BytesIO
 import qrcode
 import base64
-import tempfile
-import os
 
 
 class QRcodeConfig(ConfigBase):
@@ -17,26 +15,26 @@ class QRcodeConfig(ConfigBase):
 
 
 class QRcodePlugin(Plugin):
-    def make_qrcode(self, text: str) -> str:
-        tergent = os.path.join(tempfile.mkdtemp(), "qrcode.png")
-        image = qrcode.make(text)
-        image.save(tergent)
-        with open(tergent, "rb") as file:
-            result = base64.encodebytes(
-                file.read()).decode().replace("\n", "")
-        return result
-
     def command_qrcode(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         def wrapper():
-            text = evt.raw_message
-            text = text.lstrip("--qrcode")
-            text = text.lstrip("--二维码")
+            text = raw_string
+            text = text.lstrip("qrcode")
+            text = text.lstrip("二维码")
             text = text.strip()
+
             if len(text) > self.config.MAX_STRING_LENGTH:
                 self.bot.client_async.send(context, "字符串超过限制")
                 return
+
+            buf = BytesIO()
+            image = qrcode.make(text)
+            image.save(buf)
+            result = base64.encodebytes(
+                buf.getvalue()).decode().replace("\n", "")
+
             self.bot.client_async.send(
-                context, f"[CQ:image,file=base64://{self.make_qrcode(text)}]")
+                context, f"[CQ:image,file=base64://{result}]")
+
         self.bot.submit_multithread_task(wrapper)
 
     def on_enable(self):
