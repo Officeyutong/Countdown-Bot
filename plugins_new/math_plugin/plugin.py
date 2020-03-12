@@ -66,20 +66,19 @@ class MathPlugin(Plugin):
             await asyncio.wait_for(asyncio.wrap_future(
                 self.bot.submit_multithread_task(container.wait)
             ), timeout=self.config.DEFUALT_TIMEOUT/1000)
+            async with aiofiles.open(temp_dir/"err.txt", "r") as f:
+                stderr = await f.read()
+            if stderr.strip():
+                await self.bot.client_async.send(context, stderr[:1000])
+                self.logger.error(stderr)
             try:
                 async with aiofiles.open(temp_dir/"output.txt", "r") as f:
                     docker_output = await f.read()
             except FileNotFoundError as err:
                 await self.bot.client_async.send(context, str(err))
                 self.logger.exception(err)
-            async with aiofiles.open(temp_dir/"err.txt", "r") as f:
-                stderr = await f.read()
-            if stderr.strip():
-                await self.bot.client_async.send(context, stderr[:1000])
-                self.logger.error(stderr)
-            output: dict = ast.literal_eval(docker_output)
-            if not docker_output:
                 raise Exception("Program exited abnormally.")
+            output: dict = ast.literal_eval(docker_output)
             self.bot.logger.info(type(output))
             self.bot.logger.debug(output)
             container.remove()
