@@ -17,9 +17,10 @@ class QRcodeConfig(ConfigBase):
 class QRcodePlugin(Plugin):
     def command_qrcode(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         def wrapper():
-            text = raw_string
-            text = text.lstrip("qrcode")
-            text = text.lstrip("二维码")
+            if raw_string.startswith("qrcode"):
+                text = raw_string.lstrip("qrcode")
+            else:
+                text = raw_string.lstrip("二维码")
             text = text.strip()
 
             if len(text) > self.config.MAX_STRING_LENGTH:
