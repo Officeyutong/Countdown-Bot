@@ -70,7 +70,7 @@ class MathPlugin(Plugin):
             async with aiofiles.open(temp_dir/"err.txt", "r") as f:
                 stderr = await f.read()
             if stderr.strip():
-                await self.bot.client_async.send(context, stderr[:1000])
+                await self.bot.client_async.send(context, stderr[:1500])
                 self.logger.error(stderr)
             try:
                 async with aiofiles.open(temp_dir/"output.txt", "r") as f:
