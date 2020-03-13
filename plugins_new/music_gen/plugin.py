@@ -87,9 +87,9 @@ class MusicGenPlugin(Plugin):
         return flask.send_file(buf, as_attachment=True, attachment_filename=f"{token}.mp3", conditional=True)
 
     def command_convert_play(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        if evt.group_id in self.config.DISABLE_GROUPS:
-            self.bot.client.send(context, "本群禁止使用该指令")
-            return
+        # if evt.group_id in self.config.DISABLE_GROUPS:
+        #     self.bot.client.send(context, "本群禁止使用该指令")
+        #     return
 
         def wrapper():
             filtered: List[str] = []
@@ -138,9 +138,9 @@ class MusicGenPlugin(Plugin):
         return buf.getvalue()
 
     def command_noteconvert(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        if evt.group_id in self.config.DISABLE_GROUPS:
-            self.bot.client.send(context, "本群禁止使用该指令")
-            return
+        # if evt.group_id in self.config.DISABLE_GROUPS:
+        #     self.bot.client.send(context, "本群禁止使用该指令")
+        #     return
 
         filtered: List[str] = []
         for item in " ".join(args).split():
@@ -157,9 +157,9 @@ class MusicGenPlugin(Plugin):
         )
 
     def command_generate_music(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
-        if evt.group_id in self.config.DISABLE_GROUPS:
-            self.bot.client.send(context, "本群禁止使用该指令")
-            return
+        # if evt.group_id in self.config.DISABLE_GROUPS:
+        #     self.bot.client.send(context, "本群禁止使用该指令")
+        #     return
 
         def wrapper():
             filtered: List[str] = []
