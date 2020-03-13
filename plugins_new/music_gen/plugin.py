@@ -34,10 +34,10 @@ class MusicGenConfig(ConfigBase):
     DOWNLOAD_TIMEOUT = 3*1000*60
     # 所存储的最多的文件数
     MAX_STORING_FILES = 10
-    # 禁用的群
-    DISABLE_GROUPS: List[int] = [
-        441254450
-    ]
+    # 这些群单独的长度限制
+    GROUP_LIMITS: Dict[int, int] = {
+
+    }
 
 
 class MusicGenPlugin(Plugin):
@@ -112,7 +112,7 @@ class MusicGenPlugin(Plugin):
             result = self.noteconvert(
                 f"major:{major} "+note_string,
             )
-            self.generate_music(f"bpm:{bpm} "+result, context)
+            self.generate_music(f"bpm:{bpm} "+result, context, evt)
         self.bot.submit_multithread_task(wrapper)
 
     def noteconvert(self, note_string: str):
@@ -174,7 +174,8 @@ class MusicGenPlugin(Plugin):
                     filtered.append(item)
             self.generate_music(
                 " ".join(filtered),
-                context
+                context,
+                evt
             )
         self.bot.submit_multithread_task(wrapper)
 
@@ -198,7 +199,7 @@ class MusicGenPlugin(Plugin):
         code_pre = soup.select_one(".code > .paste > pre")
         return str(list(code_pre.children)[1])
 
-    def generate_music(self, note_string: str, context: dict):
+    def generate_music(self, note_string: str, context: dict, evt: GroupMessageEvent):
         tracks: List[List[Tuple[str, int]]] = []
         bpm = self.config.DEFAULT_BPM
 
@@ -266,7 +267,7 @@ class MusicGenPlugin(Plugin):
         for i, track in enumerate(tracks):
             self.logger.info(f"音轨 {i+1} 长度 {len(track)}")
         notes_count = sum((len(x) for x in tracks))
-        if notes_count > self.config.MAX_NOTES:
+        if notes_count > self.config.GROUP_LIMITS.get(evt.group_id, self.config.MAX_NOTES):
             self.bot.client.send(context, "超出音符数上限")
             return
 
