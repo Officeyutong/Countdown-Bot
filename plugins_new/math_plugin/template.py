@@ -1,6 +1,8 @@
 
 
 import sys
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def render_latex(formula: str) -> bytes:
