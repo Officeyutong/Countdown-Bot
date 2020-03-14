@@ -95,7 +95,12 @@ class DockerRunnerPlugin(Plugin):
                 "[超出长度限制部分已截断]"
             # self.bot.logger.debug(container.logs().decode())
         self.bot.logger.debug("done.")
-        await self.bot.client_async.send(context, "无输出" if not output else output)
+        regexpr = re.compile(r"\[CQ:(record|image),.*file=file:(.*).*\]")
+        if regexpr.search(output):
+            escape = True
+        else:
+            escape = False
+        await self.bot.client_async.send(context, "无输出" if not output else output, auto_escape=escape)
         container.remove(force=True)
         import shutil
         shutil.rmtree(temp_dir)
