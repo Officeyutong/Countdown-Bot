@@ -82,7 +82,8 @@ def plot(begin, end, funcs):
         "sign": np.sign,
         "ceil": np.ceil,
         "modf": np.modf,
-        "pi": np.pi        "numpy": np
+        "pi": np.pi,
+        "numpy": np
     }
     import numpy
     import io
