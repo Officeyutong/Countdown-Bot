@@ -82,7 +82,7 @@ def plot(begin, end, funcs):
         "sign": np.sign,
         "ceil": np.ceil,
         "modf": np.modf,
-        "pi": np.pi
+        "pi": np.pi        "numpy": np
     }
     import numpy
     import io
@@ -125,7 +125,8 @@ def plotpe(begin, end, funcs):
         "sign": np.sign,
         "ceil": np.ceil,
         "modf": np.modf,
-        "pi": np.pi
+        "pi": np.pi,
+        "numpy": np
     }
     import numpy
     import io
