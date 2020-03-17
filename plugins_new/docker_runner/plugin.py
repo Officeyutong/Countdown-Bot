@@ -44,8 +44,8 @@ class DockerRunnerConfig(ConfigBase):
         "bash": {
             "sourceFilename": "{name}.sh_",
             "executeFilename": "{name}.sh",
-            "compile": "cp {source}  {target} && chmod +x app.sh",
-            "run": "./{target}"
+            "compile": "cp {source}  {target} && chmod +x {target}",
+            "run": "bash {target}"
         }
     }
 
