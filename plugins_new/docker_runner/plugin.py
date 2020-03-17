@@ -56,7 +56,7 @@ class DockerRunnerPlugin(Plugin):
         # for item in pattern.findall(code):
         #     code = code.replace("&#{};".format(
         #         item), bytes([int(item)]).decode("utf-8"))
-        code = html.unescape(code)
+        code = html.unescape(code).strip()
         self.bot.logger.info(f"Running...")
         client = docker.from_env()
         temp_dir = pathlib.Path(tempfile.mkdtemp())
