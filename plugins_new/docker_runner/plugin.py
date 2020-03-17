@@ -40,6 +40,12 @@ class DockerRunnerConfig(ConfigBase):
             "executeFilename": "{name}.out",
             "compile": "gcc  -fdiagnostics-color=never {source} -o {target}",
             "run": "./{target}"
+        },
+        "bash": {
+            "sourceFilename": "{name}.sh_",
+            "executeFilename": "{name}.sh",
+            "compile": "cp {source}  {target}",
+            "run": "./{target}"
         }
     }
 
