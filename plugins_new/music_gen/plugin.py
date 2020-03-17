@@ -56,13 +56,13 @@ class MusicGenPlugin(Plugin):
             command_name="genhelp",
             command_handler=self.command_help,
             help_string="查看音乐生成器帮助",
-            chats={ChatType.group}
+            chats=ChatType.all()
         )
         self.register_command_wrapped(
             command_name="noteconvert",
             command_handler=self.command_noteconvert,
             help_string="转换简谱 | 使用genhelp指令查看帮助",
-            chats={ChatType.group}
+            chats=ChatType.all()
         )
         self.register_command_wrapped(
             command_name="convert-play",
