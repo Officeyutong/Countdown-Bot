@@ -1,5 +1,6 @@
 
 
+from numpy import *
 import sys
 import warnings
 warnings.filterwarnings("ignore")
@@ -92,8 +93,9 @@ def plot(begin, end, funcs):
     buf = io.BytesIO()
     figure = plt.figure(",".join(funcs))
     for func in funcs:
+        x = xs
         plt.plot(
-            xs, eval(func, globals(), {"x": xs, **MATH_NAMES})
+            xs, eval(func)
         )
     figure.canvas.print_png(buf)
     return {"latex": "", "python_expr": "", "image": buf.getvalue()}
