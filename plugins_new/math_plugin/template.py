@@ -93,7 +93,7 @@ def plot(begin, end, funcs):
     figure = plt.figure(",".join(funcs))
     for func in funcs:
         plt.plot(
-            xs, eval(func, None, {"x": xs, **MATH_NAMES})
+            xs, eval(func, globals(), {"x": xs, **MATH_NAMES})
         )
     figure.canvas.print_png(buf)
     return {"latex": "", "python_expr": "", "image": buf.getvalue()}
