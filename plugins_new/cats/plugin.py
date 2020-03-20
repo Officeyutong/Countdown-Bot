@@ -176,7 +176,7 @@ class CatsPlugin(Plugin):
         url = search_result.group("url")
         if evt.user_id in self.config.WHITE_LIST_USERS:
             need_check = False
-        my_args = {"user": evt.user_id}
+        my_args = {"user": str(evt.user_id)}
         for item in args[1:]:
             try:
                 key, value = item.split(":")
