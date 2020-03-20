@@ -193,7 +193,7 @@ class CatsPlugin(Plugin):
         my_args["user"] = int(my_args["user"])
         if need_check:
 
-            if time.time()-self.last_upload.get(evt.user_id, 0) < self.config.TRY_DELAY:
+            if time.time()-self.last_upload.get(evt.user_id, 0) < self.config.TRY_DELAY and evt.user_id not in self.config.WHITE_LIST_USERS:
                 await self.bot.client_async.send(context, f"你在 {self.config.TRY_DELAY}s 内只能进行一次尝试")
                 return
             else:
@@ -214,7 +214,7 @@ class CatsPlugin(Plugin):
                 return
             last_upload = self.conn.execute(
                 "SELECT UPLOAD_TIME FROM CATS WHERE USER_ID=?", [my_args["user"]]).fetchone()
-            if last_upload and time.time()-last_upload[0] < self.config.SUCCESS_DELAY:
+            if last_upload and time.time()-last_upload[0] < self.config.SUCCESS_DELAY and evt.user_id not in self.config.WHITE_LIST_USERS:
                 await self.bot.client_async.send(context, f"你在 {self.config.SUCCESS_DELAY}s 内只能上传成功一次")
                 return
         md5 = hashlib.md5()
