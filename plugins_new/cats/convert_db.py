@@ -32,6 +32,6 @@ for id, user_id, upload_time, data in all_data:
     except Exception as ex:
         print(ex)
 
-
+new.commit()
 old.close()
 new.close()
