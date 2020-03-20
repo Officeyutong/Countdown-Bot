@@ -66,10 +66,10 @@ class CatsPlugin(Plugin):
                 return RecognizeResult(False, "未识别到猫")
 
             for label in json_resp["AlbumLabels"]:
-                result.write(f"识别到{label['Name']},可信度{label['Confidence']}")
+                result.write(f"识别到{label['Name']},可信度{label['Confidence']}\n")
                 if label["Name"] == "猫" and label["Confidence"] >= 30:
                     return RecognizeResult(True, result.getvalue())
-        result.write("什么都没识别到")
+        result.write("没有识别到猫")
         return RecognizeResult(False, result.getvalue())
 
     def list_cats(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
