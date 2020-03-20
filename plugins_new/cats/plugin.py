@@ -198,7 +198,7 @@ class CatsPlugin(Plugin):
                 return
             last_upload = self.conn.execute(
                 "SELECT UPLOAD_TIME FROM CATS WHERE USER_ID=?", [evt.user_id]).fetchone()
-            if not last_upload or time.time()-last_upload[0] < self.config.SUCCESS_DELAY:
+            if last_upload and time.time()-last_upload[0] < self.config.SUCCESS_DELAY:
                 await self.bot.client_async.send(context, f"你在 {self.config.SUCCESS_DELAY}s 内只能上传成功一次")
                 return
         md5 = hashlib.md5()
