@@ -167,11 +167,11 @@ class CatsPlugin(Plugin):
             return
         self.bot.logger.debug(args)
         if not args:
-            self.bot.client.send(context, "请上传图片")
+            await self.bot.client_async.send(context, "请上传图片")
             return
         search_result = self.upload_pattern.search(args[0])
         if not search_result:
-            self.bot.client.send(context, "请上传图片")
+            await self.bot.client_async.send(context, "请上传图片")
             return
         url = search_result.group("url")
         if evt.user_id in self.config.WHITE_LIST_USERS:
