@@ -9,6 +9,7 @@ data.json
 /plugins/zxhdmx/data.json
 logs
 test.py
+test2.py
 data.db
 cats.db
 sign_in.db
