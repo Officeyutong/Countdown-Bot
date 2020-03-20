@@ -176,6 +176,21 @@ class CatsPlugin(Plugin):
         url = search_result.group("url")
         if evt.user_id in self.config.WHITE_LIST_USERS:
             need_check = False
+        my_args = {"user": evt.user_id}
+        for item in args[1:]:
+            try:
+                key, value = item.split(":")
+            except Exception as ex:
+                await self.bot.client_async.send(context, str(ex))
+                return
+            if key not in my_args:
+                await self.bot.client_async.send(context, f"未知参数: {key}")
+                return
+            my_args[key] = value
+        if my_args["user"] != str(evt.user_id) and evt.user_id not in self.config.WHITE_LIST_USERS:
+            await self.bot.client_async.send(context, "你不能指定上传者")
+            return
+        my_args["user"] = int(my_args["user"])
         if need_check:
 
             if time.time()-self.last_upload.get(evt.user_id, 0) < self.config.TRY_DELAY:
@@ -185,6 +200,7 @@ class CatsPlugin(Plugin):
                 self.last_upload[evt.user_id] = time.time()
 
         await self.bot.client_async.send(context, "开始保存猫猫图片..")
+
         async with self.client.get(url) as resp:
             resp: aiohttp.ClientResponse
             image_data = await resp.read()
@@ -197,7 +213,7 @@ class CatsPlugin(Plugin):
                 await self.bot.client_async.send(context, "上传失败!\n"+check_result.message)
                 return
             last_upload = self.conn.execute(
-                "SELECT UPLOAD_TIME FROM CATS WHERE USER_ID=?", [evt.user_id]).fetchone()
+                "SELECT UPLOAD_TIME FROM CATS WHERE USER_ID=?", [my_args["user"]]).fetchone()
             if last_upload and time.time()-last_upload[0] < self.config.SUCCESS_DELAY:
                 await self.bot.client_async.send(context, f"你在 {self.config.SUCCESS_DELAY}s 内只能上传成功一次")
                 return
@@ -205,11 +221,11 @@ class CatsPlugin(Plugin):
         md5.update(image_data)
         if self.conn.execute(
                 "SELECT CHECKSUM FROM CATS WHERE CHECKSUM=?", [md5.hexdigest()]).fetchone():
-            await self.bot.client_async.send(context, "你之前曾上传过相同的猫片!")
+            await self.bot.client_async.send(context, "之前有人上传过同样的猫片")
             return
 
         ret = self.conn.execute("INSERT INTO CATS (USER_ID,UPLOAD_TIME,DATA,CHECKSUM) VALUES (?,?,?,?)", (
-            evt.sender.user_id,
+            my_args["user"],
             int(time.time()),
             image_data,
             md5.hexdigest()
