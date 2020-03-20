@@ -56,6 +56,7 @@ class CatsPlugin(Plugin):
         payload = ujson.dumps(params)
         headers = make_header(payload, timestamp,
                               self.config.SECRET_ID, self.config.SECRET_KEY)
+        result = io.StringIO()
         async with self.client.post("https://tiia.tencentcloudapi.com", headers=headers, data=payload.encode()) as resp:
             json_resp = (await resp.json())["Response"]
             self.logger.info(json_resp)
@@ -63,11 +64,13 @@ class CatsPlugin(Plugin):
                 return RecognizeResult(False, json_resp["Error"]["Message"])
             if not json_resp["AlbumLabels"]:
                 return RecognizeResult(False, "未识别到猫")
-            for label in json_resp["AlbumLabels"]:
-                if label["Name"] == "猫" and label["Confidence"] >= 30:
-                    return RecognizeResult(True, "识别成功")
 
-        return RecognizeResult(False, "未识别到猫")
+            for label in json_resp["AlbumLabels"]:
+                result.write(f"识别到{label['Name']},可信度{label['Confidence']}")
+                if label["Name"] == "猫" and label["Confidence"] >= 30:
+                    return RecognizeResult(True, result.getvalue())
+        result.write("什么都没识别到")
+        return RecognizeResult(False, result.getvalue())
 
     def list_cats(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         from io import StringIO
