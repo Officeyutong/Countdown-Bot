@@ -46,7 +46,19 @@ class DockerRunnerConfig(ConfigBase):
             "executeFilename": "{name}.sh",
             "compile": "cp {source}  {target} && chmod +x {target}",
             "run": "bash {target}"
-        }
+        },
+        "rust": {
+            "sourceFilename": "{name}.rs",
+            "executeFilename": "{name}.out",
+            "compile": "rustc {source} -o {target}",
+            "run": "./{target}"
+        },
+        "haskell": {
+            "sourceFilename": "{name}.hs",
+            "executeFilename": "{name}.out",
+            "compile": "ghc {source} -o {target}",
+            "run": "./{target}"
+        },
     }
 
 
