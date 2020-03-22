@@ -10,3 +10,5 @@ RUN apt update
 RUN apt install dvipng -y
 RUN apt install texlive-full -y
 RUN pip3 install pillow
+RUN apt install ghc -y
+RUN apt install rustc -y
