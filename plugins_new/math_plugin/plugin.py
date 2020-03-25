@@ -209,7 +209,7 @@ LaTeX:
         try:
             unknown, equations, *_ = (self.process_string(x) for x in args)
         except:
-            self.bot.client.send(context, "请输入正确的参数格式")
+            await self.bot.client_async.send(context, "请输入正确的参数格式")
             raise
         TEMPLATE = f"""output=solve("{unknown}","{equations}")"""
         result = await self.execute_in_docker(TEMPLATE, context)
