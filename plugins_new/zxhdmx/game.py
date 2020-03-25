@@ -4,6 +4,7 @@ from typing import List, Dict, Set, Union, Callable
 from threading import Lock
 import random
 
+
 class GameStage(Enum):
     WAITING_TO_START = 1
     DISTRIBUTE_POINTS = 2
@@ -52,6 +53,8 @@ class Game:
     countdowns: list = None
     # 下一局要受惩罚的玩家集合
     next_punish: set = None
+    # 上一条拼点消息的ID，用以撤回 -1表示不存在
+    last_play_message_id: int = -1
 
     def __init__(self, bot, group, plugin):
         self.group: int = group
@@ -72,12 +75,13 @@ class Game:
         self.player_list_lock = Lock()
         self.base_lock = Lock()
         self.plugin = plugin
+        self.last_play_message_id = -1
         # self.punishes = set()
         # self.send_message("群 {} 的游戏创建成功qwq".format(self.group))
 
     def send_message(self, message):
         """向这个游戏对应的群发送消息"""
-        self.bot.send_group_msg(group_id=self.group, message=message)
+        return self.bot.send_group_msg(group_id=self.group, message=message)
 
     def get_profile(self, player) -> str:
         """获取玩家个人信息，以 "群名片 (QQ昵称)" 的形式返回"""
@@ -238,6 +242,7 @@ class Game:
         msg += "使用指令 \"选择 [题库ID]\" 来选择处罚方式."
         self.stage = GameStage.SELECT_PUNISH
         self.send_message(msg)
+        self.last_play_message_id = -1
 
     def play(self, player_id: int):
         """玩家参与拼点"""
@@ -265,8 +270,16 @@ class Game:
             joke_message = "qwq"
         self.points[player_id] = val
         self.non_played.remove(player_id)
-        self.send_message(
+        result = self.send_message(
             f"[CQ:at,qq={player_id}] 你的点数为 {val} ,{joke_message}\n{self.get_status_distribute()}")
+        if self.last_play_message_id != -1:
+            try:
+                self.bot.client.delete_msg(self.last_play_message_id)
+            except:
+                import traceback
+                traceback.print_exc()
+        self.last_play_message_id = result["message_id"]
+        self.bot.logger.debug(f"Last play message ID: {self.last_play_message_id}")
         if not self.non_played:
             self._handle_play_end()
 
@@ -306,7 +319,8 @@ class Game:
             self.send_message(msg)
             self._game_end()
         elif selected_item["type"] == "punish":
-            punish = self.plugin.load_data()["punish"][selected_item["content"]]
+            punish = self.plugin.load_data(
+            )["punish"][selected_item["content"]]
             msg += punish["name"]
             self.send_message(msg)
             self._handle_special_punish(
