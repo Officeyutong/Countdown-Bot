@@ -100,7 +100,7 @@ class Game:
     def get_status_punish(self) -> str:
         msg = "尚未接受处罚的玩家:\n"
         for player in self.punish_list:
-            msg += self.get_profile(player)
+            msg += self.get_profile(player)+"\n"
         return msg
 
     def get_status_distribute(self) -> str:
