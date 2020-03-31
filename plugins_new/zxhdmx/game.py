@@ -279,7 +279,8 @@ class Game:
                 import traceback
                 traceback.print_exc()
         self.last_play_message_id = result["message_id"]
-        self.bot.logger.debug(f"Last play message ID: {self.last_play_message_id}")
+        self.bot.logger.debug(
+            f"Last play message ID: {self.last_play_message_id}")
         if not self.non_played:
             self._handle_play_end()
 

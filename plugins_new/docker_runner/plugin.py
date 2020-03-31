@@ -60,6 +60,7 @@ class DockerRunnerConfig(ConfigBase):
             "run": "./{target}"
         },
     }
+    BLACKLIST_USERS: List[int] = []
 
 
 class DockerRunnerPlugin(Plugin):
@@ -124,6 +125,9 @@ class DockerRunnerPlugin(Plugin):
         shutil.rmtree(temp_dir)
 
     async def command_execx(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if evt.user_id in self.config.BLACKLIST_USERS:
+            await self.bot.client_async.send(context, "你无权使用该指令")
+            return
         if not args:
             await self.bot.client_async.send(context, f'execx [语言ID] 代码\n支持的语言ID: {" ".join(self.config.LANGUAGE_SETTINGS.keys())}')
             return
@@ -136,6 +140,9 @@ class DockerRunnerPlugin(Plugin):
         await self.run_code(code, self.config.LANGUAGE_SETTINGS[args[0]], context, stdin_data)
 
     async def command_exec(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if evt.user_id in self.config.BLACKLIST_USERS:
+            await self.bot.client_async.send(context, "你无权使用该指令")
+            return
         stdin_data = self.user_input.get((evt.group_id, evt.user_id), b"")
         code = raw_string.strip()[5:]
         code = f"""CALLER_UID={context['user_id']}\nCALLER_NICKNAME={str(context['sender']['nickname']).encode()}.decode()\nCALLER_CARD={str(context['sender']['card']).encode()}.decode()\n"""+code
@@ -143,6 +150,9 @@ class DockerRunnerPlugin(Plugin):
         await self.run_code(code, self.config.LANGUAGE_SETTINGS["python"], context, stdin_data)
 
     async def command_input(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
+        if evt.user_id in self.config.BLACKLIST_USERS:
+            await self.bot.client_async.send(context, "你无权使用该指令")
+            return
         if not args:
             await self.bot.client_async.send(context, "请提供输入数据")
         user_id = (evt.group_id, evt.user_id)
