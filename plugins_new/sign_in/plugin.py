@@ -5,7 +5,7 @@ from common.countdown_bot import CountdownBot
 from common.loop import TimeTuple
 from common.command import ChatType
 from common.event import GroupMessageEvent, PrivateMessageEvent
-from typing import List, Dict
+from typing import List, Dict, Set
 from io import StringIO
 from .datatypes import *
 
@@ -15,7 +15,7 @@ import time
 
 class SignInConfig(ConfigBase):
     # 不启用签到的群
-    BLACK_LIST_GROUPS = {"88888888"}
+    BLACK_LIST_GROUPS: Set[str] = {"88888888"}
 
 
 class SignInPlugin(Plugin):

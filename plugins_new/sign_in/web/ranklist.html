@@ -3,19 +3,18 @@
 <head>
     <title>签到排名</title>
     <!-- <script src="https://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> -->
-    <script src="http://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script>
+    <!-- <script src="http://cdn.staticfile.org/jquery/3.3.1/jquery.min.js"></script> -->
     <script src="http://cdn.staticfile.org/vue/2.5.17/vue.min.js"></script>
     <script src="http://cdn.staticfile.org/semantic-ui/2.3.3/semantic.min.js"></script>
-    <script src="http://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <!-- <script src="http://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script> -->
     <link href="http://cdn.staticfile.org/semantic-ui/2.3.3/semantic.min.css" rel="stylesheet">
-    <script src="http://cdn.staticfile.org/blueimp-md5/2.10.0/js/md5.js"></script>
+    <!-- <script src="http://cdn.staticfile.org/blueimp-md5/2.10.0/js/md5.js"></script> -->
 </head>
 
 <body style="background-color: rgb(236, 233, 233)">
     <script>
-
-        $(document).ready(() => {
-            let vue = new Vue({
+        document.onreadystatechange=()=>{
+            new Vue({
                 delimiters: ["{[", "]}"],
                 el: "#main", data: {
                     groups: [], currentGroup: "", ok: false, loading: true, groupData: [], buffer: {}
@@ -41,22 +40,7 @@
                     }
                 }
             });
-            $.post("/api/credit/get_groups").done(ret => {
-                ret = JSON.parse(ret);
-                console.log(ret);
-                if (ret.ok) {
-                    vue.groups = ret.result;
-                    let last = parseInt(window.location.href.split("/").pop());
-                    if (last != last) {
-                        vue.currentGroup = Object.entries(vue.groups)[0][0];
-                    } else {
-                        vue.currentGroup = last.toString();
-                    }
-                    vue.ok = true;
-                    vue.switchGroup(vue.currentGroup);
-                }
-            });
-        });
+        };
     </script>
 
     <div class="ui main container" style="margin-top:70px;margin-bottom:70px" id="main">
