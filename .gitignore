@@ -12,6 +12,7 @@ test.py
 test2.py
 data.db
 cats.db
+cats.db.bak
 sign_in.db
 # Byte-compiled / optimized / DLL files
 __pycache__/
