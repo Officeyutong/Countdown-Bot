@@ -19,7 +19,7 @@ class OIerdbQueryPlugin(Plugin):
             command_name="oier",
             command_handler=self.oier_query,
             help_string="OIerDB(bytew.net/OIer) 查询 | oier [关键词]",
-            chats=ChatType.all(),
+            chats={ChatType.group},
             is_async=True
         )
 
@@ -30,7 +30,7 @@ class OIerdbQueryPlugin(Plugin):
         buf = io.StringIO()
         buf.write("查询到以下数据:\n")
         async with self.client.get("http://bytew.net/OIer/search.php", params={"method": "normal", "q": args[0]}) as resp:
-            resp:aiohttp.ClientResponse
+            resp: aiohttp.ClientResponse
             items = (await resp.json(content_type=""))["result"]
         shuffle(items)
         for item in items[:5]:
@@ -48,6 +48,18 @@ class OIerdbQueryPlugin(Plugin):
                                             contest=award["identity"]
                                             ))
             buf.write("\n")
+        if self.bot.april_fool:
+            import random
+            random.choice
+            contests = ["CSP2019提高组", "IOI2019", "NOI2019", "NOIP2018", "IOI2018", "NOI2018", "NOIP2017" "IOI2017",
+                        "NOI2017", "NOIP2016", "IOI2016", "NOI2016", "NOIP2015", "IOI20215", "NOI2015"]
+            grades = ["小学", "初一", "初二", "初三", "高一", "高二", "高三"]
+            random.shuffle(contests)
+            buf.write("\n姓名:咕咕倒计时\n生理性别:未知\n")
+            for item in contests:
+                group_name = (await self.bot.client_async.get_group_info(group_id=evt.group_id))["group_name"]
+                buf.write(
+                    f"在<QQ>{group_name}<{random.choice(grades)}>时参加<{item}>以600分(全国排名1)的成绩获得<金牌>\n")
         if len(items) > 5:
             buf.write("\n请去原网站查看完整数据")
         await self.bot.client_async.send(context, buf.getvalue())

@@ -57,3 +57,9 @@ class ClientWrapper:
         # del local_vars["self"]
         del local_vars["self"]
         return self.invoker("get_stranger_info", local_vars)
+
+    def get_group_info(self, group_id: int, no_cache: bool = False):
+        local_vars = locals()
+        # del local_vars["self"]
+        del local_vars["self"]
+        return self.invoker("get_group_info", local_vars)

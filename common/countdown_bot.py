@@ -29,6 +29,7 @@ import io
 import sqlite3
 
 LOGGER: logging.Logger = None
+APRIL_FOOL: bool = False
 
 
 class CountdownBotConfig(ConfigBase):
@@ -87,8 +88,11 @@ class CountdownBot(CQHttp):
         self.client = ClientWrapper(self.api_client.invoke)
         self.client_async = ClientWrapper(lambda x, y: asyncio.wrap_future(
             self.api_client.invoke_async(x, y), loop=self.loop))
-        global LOGGER
+        global LOGGER, APRIL_FOOL
         LOGGER = self.logger
+        now = datetime.datetime.now()
+        APRIL_FOOL = (now.day == 1 and now.month == 4)
+        self.april_fool = APRIL_FOOL
 
     @property
     def logger(self) -> logging.Logger:
