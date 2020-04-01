@@ -51,7 +51,7 @@ class OIerdbQueryPlugin(Plugin):
         if self.bot.april_fool:
             import random
             random.choice
-            contests = ["CSP2019提高组", "IOI2019", "NOI2019", "NOIP2018", "IOI2018", "NOI2018", "NOIP2017" "IOI2017",
+            contests = ["CSP2019提高组", "IOI2019", "NOI2019", "NOIP2018", "IOI2018", "NOI2018", "NOIP2017", "IOI2017",
                         "NOI2017", "NOIP2016", "IOI2016", "NOI2016", "NOIP2015", "IOI20215", "NOI2015"]
             grades = ["小学", "初一", "初二", "初三", "高一", "高二", "高三"]
             random.shuffle(contests)

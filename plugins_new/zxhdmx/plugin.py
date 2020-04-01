@@ -6,7 +6,7 @@ from common.loop import TimeTuple
 from common.command import ChatType
 from common.event import MessageEvent, GroupMessageEvent
 from typing import Set, Dict, List
-from .game import Game
+from .game import Game, GameStage
 import json
 import flask
 HELP_STR =\
@@ -21,8 +21,10 @@ HELP_STR =\
 选择 [题库] ---- 选择惩罚题库 
 使用物品 [ID] [参数] ---- 使用物品
 查看物品 ---- 查看物品列表
+更换题目 [题库] ---- 重新从指定题库中选取题目
 """
-# 更换题目 ---- 重新从指定题库中选取题目
+
+
 class ZxhDmxConfig(ConfigBase):
     # 启用的群号
     ENABLE_GROUPS = [
@@ -171,7 +173,10 @@ class ZxhDmxPlugin(Plugin):
         game.play(event.sender.user_id)
 
     def zxh_command_选择(self, event: GroupMessageEvent, game: Game, problem_set):
-        game.select(event.sender.user_id, problem_set)
+        game.select(event.sender.user_id, problem_set, False)
+
+    def zxh_command_更换题目(self, event: GroupMessageEvent, game: Game, problem_set):
+        game.select(event.sender.user_id, problem_set, True)
 
     def zxh_command_查看物品(self, event: GroupMessageEvent, game: Game):
         self.bot.client.send(

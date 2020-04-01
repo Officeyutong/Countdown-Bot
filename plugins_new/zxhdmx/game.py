@@ -226,6 +226,7 @@ class Game:
             self.send_message("{} 已成为最小点数，下局起不再连带受罚。".format(
                 self.get_profile(minval[0])))
         if self.next_punish:
+            self.bot.logger.info(f"Next punish: {self.next_punish}")
             # self.punish_list += self.next_punish
             self.punish_list = self.punish_list.union(self.next_punish)
             self.next_punish.clear()
@@ -234,7 +235,7 @@ class Game:
                 self.punish_list.add(maxval[0])
             else:
                 self.punish_list.add(minval[0])
-        self.bot.logger.info(self.punish_list)
+        self.bot.logger.info(f"Punish list :f{self.punish_list}")
         self.selector = minval[0]
         msg += "下面将会由点数最小的人([CQ:at,qq={}])选择惩罚方式:\n".format(minval[0])
         for k, v in self.plugin.get_problem_set_list().items():
@@ -284,8 +285,8 @@ class Game:
         if not self.non_played:
             self._handle_play_end()
 
-    def select(self, player_id: int, problem_set):
-        if self.stage != GameStage.SELECT_PUNISH:
+    def select(self, player_id: int, problem_set, reselect: bool):
+        if self.stage != GameStage.SELECT_PUNISH and not reselect:
             self.send_message("现在不在惩罚选择阶段")
             return
         if player_id != self.selector:
@@ -294,12 +295,18 @@ class Game:
         if player_id in self.limits and problem_set not in self.limits[player_id]:
             self.send_message("你被禁止选择本处罚方式")
             return
+
         SET = self.plugin.get_problem_set_list()
         ITEMS = self.plugin.load_data()["items"]
         if problem_set not in SET:
             self.send_message("请输入正确的题库ID")
             return
         msg = "处罚方式已经选定为: {}({})\n".format(SET[problem_set], problem_set)
+
+        if reselect:
+            self.next_punish = self.punish_list.copy()
+            msg += "处罚方式已重新选定，代价为所有受惩罚玩家下一局受罚\n"
+            # self.stage=GameStage.p
         msg += "下面有请以下玩家接受处罚:\n"
         for player in self.punish_list:
             msg += "{} [CQ:at,qq={}]\n".format(
@@ -310,7 +317,7 @@ class Game:
         msg += "处罚内容为:\n"
         if selected_item["type"] == "simple":
             msg += selected_item["content"]+"\n"
-            msg += "完成处罚的玩家请使用指令 \"接受\" 确认。\n或者使用 \"使用物品 [物品ID]\" 使用物品."
+            msg += "完成处罚的玩家请使用指令 \"接受\" 确认.\n或者使用 \"使用物品 [物品ID]\" 使用物品.\n或者使用 \"更换题目 [题库]\"重新选取惩罚."
             self.send_message(msg)
             self.stage = GameStage.PUNISH
         elif selected_item["type"] == "item":
