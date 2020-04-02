@@ -239,6 +239,10 @@ class CountdownBot(CQHttp):
                 continue
             self.logger.info(f"Loaded plugin: {plugin_id}")
             plugin_class = plugin_module.get_plugin_class()
+            if not plugin_class or not issubclass(plugin_class, Plugin):
+                self.logger.info(
+                    f"Ignored {current_plugin}: not providing a valid Plugin class")
+                continue
             plugin_config_class = plugin_module.get_config_class() if hasattr(
                 plugin_module, "get_config_class") else ConfigBase
             plugin_meta: PluginMeta = plugin_module.get_plugin_meta() if hasattr(
@@ -484,7 +488,7 @@ class CountdownBot(CQHttp):
         future.add_done_callback(self.__future_exception_handler)
         return future
 
-    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, /, *args, **kwargs):
+    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, / , *args, **kwargs):
         """
         提交同步任务至线程池
         @param fn: Callable对象
