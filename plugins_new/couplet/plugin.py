@@ -22,7 +22,7 @@ class CoupletPlugin(Plugin):
             await self.bot.client_async.send(context, f"Error: {ex}")
 
     def on_enable(self):
-        self.aioclient = aiohttp.ClientSession()
+        self.aioclient = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
         self.bot: CountdownBot
         self.register_command_wrapped(
             command_name="couplet",
@@ -32,6 +32,7 @@ class CoupletPlugin(Plugin):
             alias=["对联"],
             is_async=True
         )
+
 
 def get_plugin_class():
     return CoupletPlugin
