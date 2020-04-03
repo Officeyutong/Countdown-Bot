@@ -182,6 +182,8 @@ class Game:
                     self.adjoint_punish.remove(player_id)
                 if player_id in self.add_points:
                     self.add_points.pop(player_id)
+                if player_id in self.next_punish:
+                    self.next_punish.remove(player_id)
                 self.bot.logger.info(f"{player_id} exited,{self.players}")
                 self.send_message("[CQ:at,qq={}] 成功退出游戏qwq，当前状态:\n".format(
                     player_id)+self.get_status())
