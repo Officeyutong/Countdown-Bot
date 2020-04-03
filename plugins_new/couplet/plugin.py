@@ -11,8 +11,8 @@ import aiohttp
 
 class CoupletPlugin(Plugin):
     async def command_couplet(self, plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
-        in_str = args[0]
         try:
+            in_str = args[0]
             # Supported by https://ai.binwang.me/couplet/
             async with self.aioclient.get(f"https://ai-backend.binwang.me/chat/couplet/{in_str}") as resp:
                 out_str = (await resp.json())["output"]
