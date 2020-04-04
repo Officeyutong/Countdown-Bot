@@ -57,6 +57,7 @@ class CountdownBotConfig(ConfigBase):
     ]
 
 
+
 class CountdownBot(CQHttp):
     def __init__(self, app_root: Path, **flask_args):
         """
