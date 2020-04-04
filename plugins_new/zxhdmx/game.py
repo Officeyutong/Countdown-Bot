@@ -288,7 +288,7 @@ class Game:
             self._handle_play_end()
 
     def select(self, player_id: int, problem_set, reselect: bool):
-        if self.stage != GameStage.SELECT_PUNISH and not reselect:
+        if self.stage != GameStage.SELECT_PUNISH and(not reselect and self.stage != GameStage.PUNISH):
             self.send_message("现在不在惩罚选择阶段")
             return
         if player_id != self.selector:
