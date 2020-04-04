@@ -115,7 +115,7 @@ class DockerRunnerPlugin(Plugin):
                 "[超出长度限制部分已截断]"
         if output.count("\n") > self.config.NEW_LINE_COUNT_LIMIT:
             output = "\n".join(output.split(
-                "\n")[:self.config.NEW_LINE_COUNT_LIMIT])+"[消息行数过多]"
+                "\n")[:self.config.NEW_LINE_COUNT_LIMIT]+["[消息行数过多]"])
         # self.bot.logger.debug(container.logs().decode())
         self.bot.logger.debug("done.")
         regexpr = re.compile(r"\[CQ:(record|image),.*file=file:(.*).*\]")
