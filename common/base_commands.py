@@ -1,6 +1,6 @@
 from typing import List
 from common.command import ChatType, Command
-from common.event import MessageEvent
+from common.event import MessageEvent, GroupMessageEvent, PrivateMessageEvent
 
 
 def console_stop_command(plugin, args: List[str], raw_string: str, context, evt):
@@ -12,8 +12,16 @@ def console_help_command(plugin, args: List[str], raw_string: str, context, evt)
         plugin.bot.logger.info(f"{k} --- {v.help_string}")
 
 
-def help_command(plugin, args: List[str], raw_string: str, context, evt):
+def help_command(plugin, args: List[str], raw_string: str, context, evt: MessageEvent):
+    import time
     from io import StringIO
+    if isinstance(evt, GroupMessageEvent):
+        if time.time()-plugin.bot.last_helpcommand_invoke.get(evt.user_id, 0) < plugin.bot.config.HELP_INVOKE_DELAY:
+            if evt.group_id in plugin.bot.config.ENABLE_HELP_INVOKE_DELAY_GROUPS:
+                plugin.bot.client.send(
+                    context, f"您在 {plugin.bot.config.HELP_INVOKE_DELAY}s 内只能在群内使用一次该指令")
+                return
+
     buf = StringIO()
     command_list: List[Command] = []
     chat_type = ChatType(context["message_type"])
@@ -33,6 +41,9 @@ def help_command(plugin, args: List[str], raw_string: str, context, evt):
     for cmd in command_list:
         buf.write(
             f"{cmd.command_name}{'['+','.join(cmd.alias)+']' if cmd.alias else ''} --- {cmd.help_string}\n")
+    if isinstance(evt, GroupMessageEvent):
+        buf.write("群内调用帮助指令有频率限制,请尽可能私聊调用查询.")
+        plugin.bot.last_helpcommand_invoke[evt.user_id] = time.time()
     plugin.bot.send(context, buf.getvalue())
 
 

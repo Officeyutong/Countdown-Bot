@@ -7,7 +7,7 @@ import common.event as event  # type: ignore
 from common.command import CommandManager, Command, ChatType  # type: ignore
 from common.state import StateManager  # type: ignore
 from common.config_loader import ConfigBase, load_from_file  # type: ignore
-from typing import List, Iterable, Callable, DefaultDict, Any, Optional, Union, Dict
+from typing import List, Iterable, Callable, DefaultDict, Any, Optional, Union, Dict, Tuple
 from common.datatypes import PluginMeta  # type: ignore
 from common.loop import ScheduleLoopManager  # type: ignore
 from common.utils import stop_thread  # type: ignore
@@ -49,6 +49,12 @@ class CountdownBotConfig(ConfigBase):
     BLACKLIST_USERS = [
 
     ]  # 不处理来自这些用户的指令
+    # 群内为了防止刷屏使用help指令的延迟，单位为s，对单个用户限制
+    HELP_INVOKE_DELAY = 24*3600
+    # 启用帮助指令调用限制的群
+    ENABLE_HELP_INVOKE_DELAY_GROUPS: List[int] = [
+
+    ]
 
 
 class CountdownBot(CQHttp):
@@ -93,6 +99,9 @@ class CountdownBot(CQHttp):
         now = datetime.datetime.now()
         APRIL_FOOL = (now.day == 1 and now.month == 4)
         self.april_fool = APRIL_FOOL
+        self.last_helpcommand_invoke: Dict[int, float] = {  # QQ=>调用时间
+
+        }
 
     @property
     def logger(self) -> logging.Logger:
@@ -488,7 +497,7 @@ class CountdownBot(CQHttp):
         future.add_done_callback(self.__future_exception_handler)
         return future
 
-    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, / , *args, **kwargs):
+    def submit_multithread_task(self, fn: Callable[[], Any], handle_exception=True, /, *args, **kwargs):
         """
         提交同步任务至线程池
         @param fn: Callable对象

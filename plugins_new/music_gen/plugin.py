@@ -189,7 +189,7 @@ class MusicGenPlugin(Plugin):
             )
         self.bot.submit_multithread_task(wrapper)
 
-    def store_into_redis(self, token: str, data: bytes):
+    def store_into_redis(self, token: str, data: bytes): 
         client = Redis(connection_pool=self.connection_pool)
         key = f"countdownbot-music-{token}"
         my_keys = list(client.keys("countdownbot-music-*"))
