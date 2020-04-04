@@ -22,6 +22,7 @@ class DockerRunnerConfig(ConfigBase):
     EXECUTE_TIME_LIMIT = 2000
     # 用户提供的输入数据在多长时间后到期，ms
     INPUT_EXPIRE_AFTER = 1000*60*60
+    NEW_LINE_COUNT_LIMIT = 5
     LANGUAGE_SETTINGS = {
         "python": {
             "sourceFilename": "{name}.py_",
@@ -105,14 +106,17 @@ class DockerRunnerPlugin(Plugin):
                 container.stop()
             except Exception as ex:
                 self.bot.logger.exception(ex)
-            await self.bot.client_async.send(context, f"代码'{code}'执行超时", auto_escape=False)
+            await self.bot.client_async.send(context, f"执行超时", auto_escape=False)
             # timed_out = True
         # if not timed_out:
-        output = container.logs().decode()
+        output: str = container.logs().decode()
         if len(output) > self.config.OUTPUT_LENGTH_LIMIT:
             output = output[:self.config.OUTPUT_LENGTH_LIMIT] + \
                 "[超出长度限制部分已截断]"
-            # self.bot.logger.debug(container.logs().decode())
+        if output.count("\n") > self.config.NEW_LINE_COUNT_LIMIT:
+            output = "\n".join(output.split(
+                "\n")[:self.config.NEW_LINE_COUNT_LIMIT]+["[消息行数过多]"])
+        # self.bot.logger.debug(container.logs().decode())
         self.bot.logger.debug("done.")
         regexpr = re.compile(r"\[CQ:(record|image),.*file=file:(.*).*\]")
         if regexpr.search(output):

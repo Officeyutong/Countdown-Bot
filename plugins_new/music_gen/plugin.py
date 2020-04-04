@@ -26,6 +26,8 @@ class MusicGenConfig(ConfigBase):
     DEFAULT_BPM = 120
     # 最多的音符个数
     MAX_NOTES = 500
+    # 单纯通过消息发送时，所允许的最多的音符个数
+    MAX_NOTES_THROUGH_MESSAGE = 30
     # 默认音量
     DEFAULT_VOLUME = 1
     # Redis的地址
@@ -87,13 +89,14 @@ class MusicGenPlugin(Plugin):
         return flask.send_file(buf, as_attachment=True, attachment_filename=f"{token}.mp3", conditional=True)
 
     def command_convert_play(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
-        # if evt.group_id in self.config.DISABLE_GROUPS:
-        #     self.bot.client.send(context, "本群禁止使用该指令")
-        #     return
 
         def wrapper():
             filtered: List[str] = []
-            for item in " ".join(args).split():
+            splited = " ".join(args).split()
+            if len(splited) > self.config.MAX_NOTES_THROUGH_MESSAGE:
+                self.bot.client.send(context, "消息过长，请尝试使用Ubuntu Pastebin传递参数")
+                return
+            for item in splited:
                 item = item.strip()
                 if item.startswith("from:"):
                     url = item[item.index(":")+1:]
@@ -141,9 +144,12 @@ class MusicGenPlugin(Plugin):
         # if evt.group_id in self.config.DISABLE_GROUPS:
         #     self.bot.client.send(context, "本群禁止使用该指令")
         #     return
-
+        splited = " ".join(args).split()
+        if len(splited) > self.config.MAX_NOTES_THROUGH_MESSAGE:
+            self.bot.client.send(context, "消息过长，请尝试使用Ubuntu Pastebin传递参数")
+            return
         filtered: List[str] = []
-        for item in " ".join(args).split():
+        for item in splited:
             item = item.strip()
             if item.startswith("from:"):
                 url = item[item.index(":")+1:]
@@ -163,7 +169,11 @@ class MusicGenPlugin(Plugin):
 
         def wrapper():
             filtered: List[str] = []
-            for item in " ".join(args).split():
+            splited = " ".join(args).split()
+            if len(splited) > self.config.MAX_NOTES_THROUGH_MESSAGE:
+                self.bot.client.send(context, "消息过长，请尝试使用Ubuntu Pastebin传递参数")
+                return
+            for item in splited:
                 item = item.strip()
                 if item.startswith("from:"):
                     url = item[item.index(":")+1:]
