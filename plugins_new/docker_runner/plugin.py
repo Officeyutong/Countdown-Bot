@@ -106,7 +106,7 @@ class DockerRunnerPlugin(Plugin):
                 container.stop()
             except Exception as ex:
                 self.bot.logger.exception(ex)
-            await self.bot.client_async.send(context, f"代码'{code}'执行超时", auto_escape=False)
+            await self.bot.client_async.send(context, f"执行超时", auto_escape=False)
             # timed_out = True
         # if not timed_out:
         output: str = container.logs().decode()
