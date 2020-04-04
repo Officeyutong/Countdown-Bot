@@ -18,8 +18,10 @@ def help_command(plugin, args: List[str], raw_string: str, context, evt: Message
     if isinstance(evt, GroupMessageEvent):
         if time.time()-plugin.bot.last_helpcommand_invoke.get(evt.user_id, 0) < plugin.bot.config.HELP_INVOKE_DELAY:
             if evt.group_id in plugin.bot.config.ENABLE_HELP_INVOKE_DELAY_GROUPS:
+                last_invoke: str = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(
+                    plugin.bot.last_helpcommand_invoke.get(evt.user_id)))
                 plugin.bot.client.send(
-                    context, f"您在 {plugin.bot.config.HELP_INVOKE_DELAY}s 内只能在群内使用一次该指令")
+                    context, f"您在 {last_invoke} 后的 {plugin.bot.config.HELP_INVOKE_DELAY}s 才能再次使用该指令")
                 return
 
     buf = StringIO()
