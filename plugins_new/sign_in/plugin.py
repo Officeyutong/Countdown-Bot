@@ -15,7 +15,9 @@ import time
 
 class SignInConfig(ConfigBase):
     # 不启用签到的群
-    BLACK_LIST_GROUPS: Set[str] = {"88888888"}
+    BLACK_LIST_GROUPS: Set[int] = {88888888}
+    # 隐藏积分的群
+    HIDE_SCORE_GROUPS: Set[int] = {88888888}
 
 
 class SignInPlugin(Plugin):
@@ -151,7 +153,7 @@ class SignInPlugin(Plugin):
     def command_sign_in(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
         group_id = int(evt.group_id)
 
-        if str(group_id) in self.config.BLACK_LIST_GROUPS:
+        if group_id in self.config.BLACK_LIST_GROUPS:
             self.bot.client_async.send(context, "签到功能在本群停用")
             return
 
@@ -166,11 +168,14 @@ class SignInPlugin(Plugin):
 
         if last_time.tm_year == current_time.tm_year and last_time.tm_yday == current_time.tm_yday:
             # 年份和天数都相等，当天已经签到
-            self.bot.client_async.send(context, f"""[CQ:at,qq={user_id}]今天已经签过到啦！
-连续签到：{last_sign_in_data.duration}天
-当前积分：{last_sign_in_data.score}
-本月签到次数：{month_times}
-累计群签到次数：{all_times}""")
+            buf = StringIO()
+            buf.write(f"[CQ:at,qq={user_id}]今天已经签过到啦！\n")
+            buf.write(f"连续签到：{last_sign_in_data.duration}天\n")
+            if group_id not in self.config.HIDE_SCORE_GROUPS:
+                buf.write(f"当前积分：{last_sign_in_data.score}\n")
+            buf.write(f"本月签到次数：{month_times}\n")
+            buf.write(f"累计群签到次数：{all_times}")
+            self.bot.client_async.send(context, buf.getvalue())
             return
 
         sign_in_data: SignInData = SignInData(
@@ -209,14 +214,17 @@ class SignInPlugin(Plugin):
 
         self.save_data(sign_in_data)
 
-        self.bot.client_async.send(context,
-                                   f"""给[CQ:at,qq={sign_in_data.user_id}]签到成功了！
-连续签到：{sign_in_data.duration}天
-积分增加：{sign_in_data.score_changes}
-连续签到加成：{duration_add}
-当前积分：{sign_in_data.score}
-本月签到次数：{month_times + 1}
-累计群签到次数：{all_times + 1}""")
+        buf = StringIO()
+        buf.write(f"给[CQ:at,qq={sign_in_data.user_id}]签到成功了！\n")
+        buf.write(f"连续签到：{sign_in_data.duration}天\n")
+        if group_id not in self.config.HIDE_SCORE_GROUPS:
+            buf.write(f"积分增加：{sign_in_data.score_changes}\n")
+            buf.write(f"连续签到加成：{duration_add}\n")
+            buf.write(f"当前积分：{sign_in_data.score}\n")
+        buf.write(f"本月签到次数：{month_times + 1}\n")
+        buf.write(f"累计群签到次数：{all_times + 1}")
+
+        self.bot.client_async.send(context, buf.getvalue())
 
     def command_user_query(self, plugin, args: List[str], raw_string: str, context: dict, evt: PrivateMessageEvent):
         user_id = int(evt.sender.user_id)
@@ -224,7 +232,10 @@ class SignInPlugin(Plugin):
         buf = StringIO()
         buf.write(f"查询到您在{len(user_data)}个群有签到记录:\n")
         for item in user_data:
-            buf.write(f"群{item.group_id}积分为：{item.score}\n")
+            if item.group_id in self.config.HIDE_SCORE_GROUPS:
+                buf.write(f"群{item.group_id}隐藏了积分\n")
+            else:
+                buf.write(f"群{item.group_id}积分为：{item.score}\n")
         self.bot.client_async.send(context, buf.getvalue())
 
     def command_group_query(self, plugin, args: List[str], raw_string: str, context: dict, evt: GroupMessageEvent):
@@ -255,14 +266,24 @@ class SignInPlugin(Plugin):
         group_id = int(evt.group_id)
         group_sign_in_data = self.get_sign_in_data(
             query_month_begin, query_month_end, group_id, user_id)
+
         buf = StringIO()
         buf.write(f"[CQ:at,qq={user_id}]\n")
         buf.write(f"查询到{len(group_sign_in_data)}条签到记录：\n")
-        buf.write(f"日期 时间 积分 积分变化\n")
+
+        if group_id in self.config.HIDE_SCORE_GROUPS:
+            buf.write(f"时间 日期\n")
+        else:
+            buf.write(f"日期 时间 积分 积分变化\n")
+
         for item in group_sign_in_data:
             time_str = time.strftime(
                 "%Y-%m-%d %H:%M", time.localtime(item.time))
-            buf.write(f"{time_str} {item.score} {item.score_changes:+d}\n")
+            if group_id in self.config.HIDE_SCORE_GROUPS:
+                buf.write(f"{time_str}\n")
+            else:
+                buf.write(f"{time_str} {item.score} {item.score_changes:+d}\n")
+
         self.bot.client_async.send(context, buf.getvalue())
 
     def on_disable(self):
