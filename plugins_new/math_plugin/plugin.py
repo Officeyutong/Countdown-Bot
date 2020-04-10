@@ -272,8 +272,8 @@ LaTeX:
 
     async def command_render_latex(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         to_render = base64.encodebytes(html.unescape(raw_string).replace(
-            "latex ", "", 1).encode()).decode().replace("\n", "")
-        TEMPLATE = "import base64\noutput={'latex':'','python_expr':'','image':render_latex(base64.decodebytes('{to_render}'.encode()).decode())}".replace(
+            "latex", "", 1).encode()).decode().replace("\n", "")
+        TEMPLATE = "import base64\noutput={'latex':'','python_expr':'','image':render_latex(base64.decodebytes('to_render'.encode()).decode())}".replace(
             "to_render", to_render)
         result = await self.execute_in_docker(TEMPLATE, context)
         await self.bot.client_async.send(
