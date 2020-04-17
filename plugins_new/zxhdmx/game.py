@@ -333,8 +333,9 @@ class Game:
             )["punish"][selected_item["content"]]
             msg += punish["name"]
             self.send_message(msg)
-            self._handle_special_punish(
-                player_id, selected_item["content"], punish)
+            for current_player in self.players:
+                self._handle_special_punish(
+                    current_player, selected_item["content"], punish)
             self._game_end()
 
     def _handle_special_punish(self, player_id: int, punish_id: str, punish: dict):
