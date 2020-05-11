@@ -281,7 +281,7 @@ class MusicGenPlugin(Plugin):
                 tracks.append(process_track(
                     track_string, inversed, int(beats)))
                 if total_minutes*60 > self.config.MAX_LENGTH_IN_SECONDS:
-                    self.bot.client(
+                    self.bot.client.send(
                         context, f"单个音轨的长度不能超过{self.config.MAX_LENGTH_IN_SECONDS}秒")
                     return
                 total_minutes = 0
