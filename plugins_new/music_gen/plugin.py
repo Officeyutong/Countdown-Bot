@@ -234,7 +234,7 @@ class MusicGenPlugin(Plugin):
                     if abs(float(duration)) < 0.1:
                         raise ValueError("abs(Duration) >= 0.1")
                     nonlocal total_minutes
-                    total_minutes += 4/duration/bpm
+                    total_minutes += 4/duration/float(bpm)
                     notes.append((
                         note_name, float(duration)
                     ))
