@@ -40,6 +40,8 @@ class MusicGenConfig(ConfigBase):
     GROUP_LIMITS: Dict[int, int] = {
 
     }
+    # 音乐最大长度，秒
+    MAX_LENGTH_IN_SECONDS = 6*60
 
 
 class MusicGenPlugin(Plugin):
@@ -189,7 +191,7 @@ class MusicGenPlugin(Plugin):
             )
         self.bot.submit_multithread_task(wrapper)
 
-    def store_into_redis(self, token: str, data: bytes): 
+    def store_into_redis(self, token: str, data: bytes):
         client = Redis(connection_pool=self.connection_pool)
         key = f"countdownbot-music-{token}"
         my_keys = list(client.keys("countdownbot-music-*"))
@@ -212,6 +214,7 @@ class MusicGenPlugin(Plugin):
     def generate_music(self, note_string: str, context: dict, evt: GroupMessageEvent):
         tracks: List[List[Tuple[str, int]]] = []
         bpm = self.config.DEFAULT_BPM
+        total_minutes = 0.0
 
         def process_track(string: str, inversed_duration: bool, beats: int):
             notes: List[Tuple[str, int]] = []
@@ -230,6 +233,7 @@ class MusicGenPlugin(Plugin):
                         duration = beats/(float(duration))
                     if abs(float(duration)) < 0.1:
                         raise ValueError("abs(Duration) >= 0.1")
+                    total_minutes += 4/duration/bpm
                     notes.append((
                         note_name, float(duration)
                     ))
@@ -274,6 +278,11 @@ class MusicGenPlugin(Plugin):
             if track_string:
                 tracks.append(process_track(
                     track_string, inversed, int(beats)))
+                if total_minutes*60 > self.config.MAX_LENGTH_IN_SECONDS:
+                    self.bot.client(
+                        context, f"单个音轨的长度不能超过{self.config.MAX_LENGTH_IN_SECONDS}秒")
+                    return
+                total_minutes = 0
         for i, track in enumerate(tracks):
             self.logger.info(f"音轨 {i+1} 长度 {len(track)}")
         notes_count = sum((len(x) for x in tracks))
