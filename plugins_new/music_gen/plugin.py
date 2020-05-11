@@ -229,6 +229,7 @@ class MusicGenPlugin(Plugin):
                     continue
                 try:
                     note_name, duration = note.split(".", 1)
+                    duration = float(duration)
                     if inversed_duration:
                         duration = beats/(float(duration))
                     if abs(float(duration)) < 0.1:
