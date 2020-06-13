@@ -142,8 +142,10 @@ class CatsPlugin(Plugin):
             return
         upload_time: time.struct_time = time.localtime(image[2])
         b64_encoded = base64.encodebytes(image[3]).decode().replace("\n", "")
+        upload_time_string = "" if image[
+            2] == 0 else f"(上传于 {upload_time.tm_year}年 {upload_time.tm_mon}月 {upload_time.tm_mday}日)"
         self.bot.client_async.send(context,
-                                   f"来自 {image[1]} 的猫片 {image[0]} (上传于 {upload_time.tm_year}年 {upload_time.tm_mon}月 {upload_time.tm_mday}日)\n[CQ:image,file=base64://{b64_encoded}]")
+                                   f"来自 {image[1]} 的猫片 {image[0]} {upload_time_string}\n[CQ:image,file=base64://{b64_encoded}]")
 
     async def upload_cat_image(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         import time
