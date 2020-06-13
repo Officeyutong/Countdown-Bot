@@ -15,11 +15,15 @@ class DynamicLoaderPlugin(Plugin):
     def has_permission(self, user_id: int) -> bool:
         return user_id in self.config.ALLOWED_USERS
 
+    def _process_str(self, command: str, to_replace: str) -> str:
+        text: str = command.replace(to_replace, "", 1)
+        return text.lstrip()
+
     async def command_load_async(self, plugin: "DynamicLoaderPlugin", args: List[str], raw_string: str, context: dict, evt: MessageEvent):
         if not self.has_permission(evt.user_id):
             await self.bot.client_async.send(context, "你没有权限这样做")
             return
-        module = compile(raw_string.replace("load-async", "", 1),
+        module = compile(self._process_str(raw_string, "load-async"),
                          mode="exec", filename="<dynamic-loader>")
         my_globals = dict()
         exec(module, my_globals)
@@ -36,7 +40,7 @@ class DynamicLoaderPlugin(Plugin):
             "evt": evt,
             "client": self.bot.client
         }
-        exec(raw_string.replace("load-sync", "", 1), my_globals)
+        exec(self._process_str(raw_string, "load-sync"), my_globals)
         result = my_globals.get("result", "")
         if result:
             self.bot.client.send(context, repr(result))
