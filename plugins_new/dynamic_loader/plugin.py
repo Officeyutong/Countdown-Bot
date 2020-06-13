@@ -29,7 +29,7 @@ class DynamicLoaderPlugin(Plugin):
                          mode="exec", filename="<dynamic-loader>")
         my_globals = dict()
         exec(module, my_globals)
-        resp = await my_globals["func"](self, evt)
+        resp = await my_globals["run"](self, evt)
         if resp:
             await self.bot.client_async.send(context, str(resp))
 
@@ -55,7 +55,7 @@ class DynamicLoaderPlugin(Plugin):
         self.register_command_wrapped(
             command_name="load-async",
             command_handler=self.command_load_async,
-            help_string="在Bot同环境下运行异步代码(实现func函数,提供plugin作为插件对象,evt作为MessageEvent对象)",
+            help_string="在Bot同环境下运行异步代码(实现run函数,提供plugin作为插件对象,evt作为MessageEvent对象)",
             chats=ChatType.all(),
             is_async=True
         )
