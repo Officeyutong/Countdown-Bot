@@ -27,7 +27,7 @@ import datetime
 import sys
 import io
 import sqlite3
-
+import html
 LOGGER: logging.Logger = None
 APRIL_FOOL: bool = False
 
@@ -154,7 +154,7 @@ class CountdownBot(CQHttp):
                 self.logger.debug(f"invoking {command_name}")
                 self.command_manager.name_bindings[command_name].invoke(
                     args=splited[1:],
-                    raw_string=evt.raw_message[len(prefix):],
+                    raw_string=html.unescape(evt.raw_message[len(prefix):]),
                     context=context,
                     event=evt,
                     bot=self
