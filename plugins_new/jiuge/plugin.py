@@ -16,7 +16,7 @@ class JiugeConfig(ConfigBase):
     TIME_LIMIT = 10
     # 重试次数
     RETRY_TIMES = 50
-
+    ROOT_URL = "http://118.190.162.99:8080"
 
 class JiugePlugin(Plugin):
     def command_help(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
@@ -47,7 +47,7 @@ class JiugePlugin(Plugin):
 
         async def handle():
             try:
-                async with self.client.post("http://jiuge.thunlp.cn/getKeyword", data={
+                async with self.client.post(f"{self.config.ROOT_URL}/getKeyword", data={
                     "level": 1,
                     "genre": genre,
                         "keywords": keyword}) as urlf:
@@ -61,7 +61,7 @@ class JiugePlugin(Plugin):
                         return
                     keywords: List[dict] = resp_json["data"]
                 self.bot.logger.info(f"Keywords: {keywords}")
-                async with self.client.post("http://jiuge.thunlp.cn/sendPoem", data={
+                async with self.client.post(f"{self.config.ROOT_URL}/sendPoem", data={
                     "style": style,
                     "genre": genre,
                     "yan": yan,
@@ -82,7 +82,7 @@ class JiugePlugin(Plugin):
                         return
                 done = False
                 for i in range(self.config.RETRY_TIMES):
-                    async with self.client.post("http://jiuge.thunlp.cn/getPoem", data={
+                    async with self.client.post(f"{self.config.ROOT_URL}/getPoem", data={
                         "style": style,
                         "genre": genre,
                         "yan": yan,
@@ -126,7 +126,7 @@ class JiugePlugin(Plugin):
                         ("\n".join(section)+"\n\n" for section in result_data["poem"]))
                 self.bot.logger.info(generate_result)
                 if image:
-                    async with self.client.post("http://jiuge.thunlp.cn/share", data={
+                    async with self.client.post(f"{self.config.ROOT_URL}/share", data={
                         "style": style,
                         "genre": genre,
                         "yan": yan,
@@ -137,7 +137,7 @@ class JiugePlugin(Plugin):
                     }) as urlf:
                         image_file = (await urlf.json(content_type=""))["data"]
                         buf.write(
-                            f"[CQ:image,file=http://jiuge.thunlp.cn/share/new/{image_file}]")
+                            f"[CQ:image,file={self.config.ROOT_URL}/share/new/{image_file}]")
 
                 await self.bot.client_async.send(context, buf.getvalue())
             except Exception as ex:
