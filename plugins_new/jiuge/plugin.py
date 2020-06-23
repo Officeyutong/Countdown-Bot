@@ -47,26 +47,26 @@ class JiugePlugin(Plugin):
 
         async def handle():
             try:
-                async with self.client.post(f"{self.config.ROOT_URL}/getKeyword", data={
-                    "level": 1,
-                    "genre": genre,
-                        "keywords": keyword}) as urlf:
-                    urlf: aiohttp.ClientResponse
-                    resp_json = await urlf.json(content_type="")
-                    if resp_json["code"] == "mgc":
-                        await self.bot.client_async.send(context, f"主题 {keyword} 无法作诗")
-                        return
-                    elif resp_json["code"] != '0':
-                        await self.bot.client_async.send(context, resp_json["info"])
-                        return
-                    keywords: List[dict] = resp_json["data"]
-                self.bot.logger.info(f"Keywords: {keywords}")
+                # async with self.client.post(f"{self.config.ROOT_URL}/getKeyword", data={
+                #     "level": 1,
+                #     "genre": genre,
+                #         "keywords": keyword}) as urlf:
+                #     urlf: aiohttp.ClientResponse
+                #     resp_json = await urlf.json(content_type="")
+                #     if resp_json["code"] == "mgc":
+                #         await self.bot.client_async.send(context, f"主题 {keyword} 无法作诗")
+                #         return
+                #     elif resp_json["code"] != '0':
+                #         await self.bot.client_async.send(context, resp_json["info"])
+                #         return
+                #     keywords: List[dict] = resp_json["data"]
+                # self.bot.logger.info(f"Keywords: {keywords}")
                 async with self.client.post(f"{self.config.ROOT_URL}/sendPoem", data={
                     "style": style,
                     "genre": genre,
                     "yan": yan,
                     "user_id": user_id,
-                    "keywords": json.dumps(keywords)
+                    "keyword": keyword
                 }) as urlf:
                     resp_json = await urlf.json(content_type="")
                     print("send response =", resp_json)
