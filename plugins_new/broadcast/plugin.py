@@ -95,7 +95,7 @@ class BroadcastPlugin(Plugin):
         self.register_schedule_loop(
             TimeTuple(self.config.BROADCAST_HOUR,
                       self.config.BROADCAST_MINUTE),
-            self.schedule_loop(),
+            self.schedule_loop,
             "定时群倒计时广播"
         )
         self.register_command_wrapped(

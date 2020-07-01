@@ -34,7 +34,7 @@ class ScheduleLoopManager:
                 self.bot.logger.debug(f"{coro} {type(coro)}")
                 # import pdb; pdb.set_trace()
                 try:
-                    await coro
+                    await coro()
                     self.bot.logger.info(f"{name} executed.")
                     
                 except:

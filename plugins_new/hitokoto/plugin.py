@@ -85,7 +85,7 @@ class HitokotoPlugin(Plugin):
         self.register_schedule_loop(
             time=TimeTuple(hour=self.config.HITOKOTO_HOUR,
                            minute=self.config.HITOKOTO_MINUTE),
-            coro=self.schedule_loop(),
+            coro=self.schedule_loop,
             name="Hitokoto定时广播"
         )
         self.register_state_handler(
