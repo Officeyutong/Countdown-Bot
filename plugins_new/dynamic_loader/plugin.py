@@ -44,7 +44,11 @@ class DynamicLoaderPlugin(Plugin):
         }
         to_execute = self._process_str(raw_string, "load-sync")
         self.bot.logger.debug(to_execute)
-        exec(to_execute, my_globals)
+        try:
+            exec(to_execute, my_globals)
+        except:
+            import traceback
+            self.bot.client.send(context, traceback.format_exc())
         result = my_globals.get("result", None)
         # print(f"{result=}")
         self.bot.client.send(context, repr(result))
