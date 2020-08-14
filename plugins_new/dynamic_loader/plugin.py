@@ -28,8 +28,12 @@ class DynamicLoaderPlugin(Plugin):
         module = compile(to_execute,
                          mode="exec", filename="<dynamic-loader>")
         my_globals = dict()
-        exec(module, my_globals)
-        resp = await my_globals["run"](self, evt)
+        try:
+            exec(module, my_globals)
+            resp = await my_globals["run"](self, evt)
+        except:
+            import traceback
+            await self.bot.client_async.send(context, traceback.format_exc())
         if resp:
             await self.bot.client_async.send(context, str(resp))
 
