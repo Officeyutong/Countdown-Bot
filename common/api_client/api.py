@@ -4,8 +4,9 @@ from .datatypes import *
 
 
 class ClientWrapper:
-    def __init__(self, invoker: [[str, dict], Future]):
+    def __init__(self, invoker: Callable[[str, dict], Future]):
         self.invoker = invoker
+        # self.items = set(dir(self))
 
     def send_private_msg(self, user_id: int, message: Union[str, dict], auto_escape: bool = False) -> int:
         local_vars = locals()
@@ -45,7 +46,8 @@ class ClientWrapper:
             "discuss": ("discuss_id"),
             "group": ("group_id")
         }
-        print(context)
+        # print(context)
+        # print("sending....")
         return self.send_msg(message=message,
                              auto_escape=auto_escape,
                              message_type=message_type,
@@ -70,10 +72,11 @@ class ClientWrapper:
         del local_vars["self"]
         return self.invoker("get_group_member_list", local_vars)
 
-    def __getattribute__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Any:
+        # print(f"Getting {name=}")
         if name in self.__dict__:
             return getattr(self, name)
         else:
-            def wrapper(self,  **kwargs) -> Any:
+            def wrapper( **kwargs) -> Any:
                 return self.invoker(name,  kwargs)
             return wrapper
