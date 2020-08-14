@@ -1,4 +1,4 @@
-from typing import Callable, Union, Literal
+from typing import Any, Callable, Union, Literal
 from concurrent.futures import Future
 from .datatypes import *
 
@@ -69,3 +69,11 @@ class ClientWrapper:
         # del local_vars["self"]
         del local_vars["self"]
         return self.invoker("get_group_member_list", local_vars)
+
+    def __getattribute__(self, name: str) -> Any:
+        if hasattr(self, name):
+            return getattr(self, name)
+        else:
+            def wrapper(self,  **kwargs) -> Any:
+                return self.invoker(name,  kwargs)
+            return wrapper
