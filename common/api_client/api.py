@@ -71,7 +71,7 @@ class ClientWrapper:
         return self.invoker("get_group_member_list", local_vars)
 
     def __getattribute__(self, name: str) -> Any:
-        if hasattr(self, name):
+        if name in self.__dict__:
             return getattr(self, name)
         else:
             def wrapper(self,  **kwargs) -> Any:
