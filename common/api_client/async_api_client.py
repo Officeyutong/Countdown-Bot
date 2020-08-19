@@ -41,7 +41,7 @@ class AsyncHTTPAPIClient:
                 elif resp.status == 403:
                     raise InvalidAccessTokenException(
                         f"Bad access token: {self.access_token}")
-                json_resp = await resp.json(encoding="utf-8")
+                json_resp = await resp.json(encoding="utf-8", content_type=None)
                 if json_resp["status"] == "failed":
                     code = json_resp["retcode"]
                     raise APIError(
