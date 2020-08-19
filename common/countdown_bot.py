@@ -55,6 +55,9 @@ class CountdownBotConfig(ConfigBase):
     ENABLE_HELP_INVOKE_DELAY_GROUPS: List[int] = [
 
     ]
+    # 代理地址，形如http://127.0.0.1:8000
+    # 设置为None表示不使用
+    PROXY = None
 
 
 

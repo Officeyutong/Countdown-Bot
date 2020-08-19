@@ -8,14 +8,15 @@ from .exceptions import InvalidAccessTokenException, APIError
 
 
 class AsyncHTTPAPIClient:
-    def __init__(self, loop: asyncio.AbstractEventLoop, server_url: str, access_token: str = "", secret: str = ""):
+    def __init__(self, loop: asyncio.AbstractEventLoop, server_url: str, access_token: str = "", secret: str = "", proxy: str = None):
         self.loop = loop
         self.client = aiohttp.ClientSession(headers={
             "Authorization": f"Token {access_token}"
-        })
+        }, trust_env=True)
         self.server_url = server_url
         self.access_token = access_token
         self.secret = secret
+        self.proxy = proxy
 
     def invoke_async(self, api_name: str, data: dict) -> Future:
         return self.invoke(api_name, data, False)
@@ -31,7 +32,7 @@ class AsyncHTTPAPIClient:
         @return: 调用结果或相应Future
         """
         async def wrapper():
-            async with self.client.post(urllib.parse.urljoin(self.server_url, api_name), json=data) as resp:
+            async with self.client.post(urllib.parse.urljoin(self.server_url, api_name), json=data, proxy=self.proxy) as resp:
                 # print(resp.request_info.headers)
                 resp: aiohttp.ClientResponse
                 if resp.status == 401:
