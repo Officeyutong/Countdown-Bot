@@ -29,7 +29,7 @@ class OIerdbQueryPlugin(Plugin):
             return
         buf = io.StringIO()
         buf.write("查询到以下数据:\n")
-        async with self.client.get("http://bytew.net/OIer/search.php", params={"method": "normal", "q": args[0]}) as resp:
+        async with self.client.get("https://bytew.net/OIer/search.php", params={"method": "normal", "q": args[0]}) as resp:
             resp: aiohttp.ClientResponse
             items = (await resp.json(content_type=""))["result"]
         shuffle(items)
