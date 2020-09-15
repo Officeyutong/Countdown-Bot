@@ -2,19 +2,16 @@
 
 #### 项目介绍
 
-QQ群多功能Bot。
-
-**项目已经更改架构，旧项目地址https://gitee.com/yutong_java/CountdownBot-Old**
+QQ群多功能Bot，配合go-cqhttp(https://github.com/Mrs4s/go-cqhttp)或者mirai-cqhttp使用。
 
 
 #### 安装教程
 
 前置需求:
 
-- Coolq + HTTPAPI
-- Python3.8
-- requires.txt里的各种库
-
+- CQHTTP协议实现
+- Python3.8或者更高版本
+- requirements.txt中的依赖
 #### 使用说明
 
 - 安装requires.txt里的依赖
