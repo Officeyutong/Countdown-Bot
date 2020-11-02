@@ -13,10 +13,11 @@ import json
 
 class JiugeConfig(ConfigBase):
     # 生成时限
-    TIME_LIMIT = 10
+    TIME_LIMIT = 30
     # 重试次数
     RETRY_TIMES = 50
-    ROOT_URL = "http://jiuge.thunlp.org/"
+    ROOT_URL = "http://jiuge.thunlp.org"
+
 
 class JiugePlugin(Plugin):
     def command_help(self, plugin, args: List[str], raw_string: str, context: dict, evt: MessageEvent):
@@ -41,7 +42,9 @@ class JiugePlugin(Plugin):
         if genre not in "142753":
             await self.bot.client_async.send(context, "非法体裁")
             return
-        user_id = str(uuid.uuid1())[:30]
+        import random
+        user_id = "".join(random.choice(
+            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") for x in range(30))
         await self.bot.client_async.send(
             context, f"开始生成{user_id}\n体裁: {genre}\n关键词:{keyword}\n单句长度:{yan}\n样式:{style}")
 
@@ -66,8 +69,9 @@ class JiugePlugin(Plugin):
                     "genre": genre,
                     "yan": yan,
                     "user_id": user_id,
-                    "keywords": keywords
+                    "keywords": json.dumps(keywords)
                 }) as urlf:
+                    print(await urlf.text())
                     resp_json = await urlf.json(content_type="")
                     print("send response =", resp_json)
                     resp_json["code"] = str(resp_json["code"])
@@ -96,7 +100,7 @@ class JiugePlugin(Plugin):
                             await self.bot.client_async.send(context, f"主题 {keyword} 无法作诗")
                             return
                         elif resp_json["code"] == "1":
-                            await asyncio.sleep(0.5)
+                            await asyncio.sleep(2)
                             continue
                         if resp_json["code"] not in {"1", "0", "666"}:
                             await self.bot.client_async.send(context, "九歌服务器错误")
@@ -104,7 +108,7 @@ class JiugePlugin(Plugin):
                         generate_result = resp_json
                         done = True
                         break
-                    
+
                 if not done:
                     raise Exception(f"{user_id} 重试次数过多")
                 from io import StringIO
