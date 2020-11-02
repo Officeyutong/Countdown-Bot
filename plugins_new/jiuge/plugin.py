@@ -66,7 +66,7 @@ class JiugePlugin(Plugin):
                     "genre": genre,
                     "yan": yan,
                     "user_id": user_id,
-                    "keyword": keywords
+                    "keywords": keywords
                 }) as urlf:
                     resp_json = await urlf.json(content_type="")
                     print("send response =", resp_json)
