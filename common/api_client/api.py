@@ -8,22 +8,22 @@ class ClientWrapper:
         self.invoker = invoker
         # self.items = set(dir(self))
 
-    def send_private_msg(self, user_id: int, message: Union[str, dict], auto_escape: bool = False) -> int:
+    def send_private_msg(self, user_id: int, message: Union[str, dict], auto_escape: bool = False) -> Any:
         local_vars = locals()
         del local_vars["self"]
         return self.invoker("send_private_msg", local_vars)
 
-    def send_group_msg(self, group_id: int, message: Union[str, dict], auto_escape: bool = False) -> int:
+    def send_group_msg(self, group_id: int, message: Union[str, dict], auto_escape: bool = False) -> Any:
         local_vars = locals()
         del local_vars["self"]
         return self.invoker("send_group_msg", local_vars)
 
-    def send_discuss_msg(self, discuss_id: int, message: Union[str, dict], auto_escape: bool = False) -> int:
+    def send_discuss_msg(self, discuss_id: int, message: Union[str, dict], auto_escape: bool = False) -> Any:
         local_vars = locals()
         del local_vars["self"]
         return self.invoker("send_discuss_msg", local_vars)
 
-    def send_msg(self, message: Union[str, dict], message_type: str = "", discuss_id: int = -1, user_id: int = -1, group_id: int = -1, auto_escape: bool = False) -> int:
+    def send_msg(self, message: Union[str, dict], message_type: str = "", discuss_id: int = -1, user_id: int = -1, group_id: int = -1, auto_escape: bool = False) -> Any:
         local_vars = locals()
         del local_vars["self"]
         return self.invoker("send_msg", local_vars)

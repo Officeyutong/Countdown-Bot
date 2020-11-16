@@ -14,6 +14,7 @@ data.db
 cats.db
 cats.db.bak
 sign_in.db
+simple_broadcaster
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
