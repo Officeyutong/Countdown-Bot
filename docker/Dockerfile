@@ -8,7 +8,7 @@ RUN pip3 install numpy sympy scipy matplotlib
 COPY sources.list /etc/apt/
 RUN apt update 
 RUN apt install dvipng -y
-RUN apt install texlive-full -y
+RUN apt install texlive -y
 RUN pip3 install pillow
 RUN apt install ghc -y
 RUN apt install rustc -y
