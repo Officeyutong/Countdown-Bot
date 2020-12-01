@@ -48,7 +48,7 @@ class MathPlugin(Plugin):
         src_file = "run.py"
         async with aiofiles.open(temp_dir/src_file, "w") as f:
             await f.write(self.template.replace("{CODE}", code))
-        command = f"python3.8 -O {src_file}"
+        command = f"python3 -O {src_file}"
         container = client.containers.run(
             image=self.config.DOCKER_IMAGE,
             command=f"sh -c '{command} 2> err.txt'",
