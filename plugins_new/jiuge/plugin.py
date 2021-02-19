@@ -170,7 +170,7 @@ class JiugePlugin(Plugin):
             command_name="jiuge",
             command_handler=self.command_jiuge,
             help_string="使用九歌作诗 | 输入jiuge-help查看帮助",
-            chats={ChatType.discuss, ChatType.group},
+            chats={ChatType.discuss, ChatType.group, ChatType.private},
             is_async=True
         )
 

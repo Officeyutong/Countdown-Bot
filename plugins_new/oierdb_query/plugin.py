@@ -19,7 +19,7 @@ class OIerdbQueryPlugin(Plugin):
             command_name="oier",
             command_handler=self.oier_query,
             help_string="OIerDB(bytew.net/OIer) 查询 | oier [关键词]",
-            chats={ChatType.group},
+            chats={ChatType.group, ChatType.private},
             is_async=True
         )
 
