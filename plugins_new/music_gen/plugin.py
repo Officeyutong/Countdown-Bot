@@ -206,11 +206,12 @@ class MusicGenPlugin(Plugin):
         client.set(key, data, px=self.config.DOWNLOAD_TIMEOUT)
 
     def load_from_ubntupastebin(self, url: str) -> str:
+        # with requests.get(url) as urlf:
+        #     soup = bs4.BeautifulSoup(urlf.text, "lxml")
+        # code_pre = soup.select_one(".code > .paste > pre")
+        # return str(list(code_pre.children)[1])
         with requests.get(url) as urlf:
-            soup = bs4.BeautifulSoup(urlf.text, "lxml")
-        code_pre = soup.select_one(".code > .paste > pre")
-        return str(list(code_pre.children)[1])
-
+            return urlf.text
     def generate_music(self, note_string: str, context: dict, evt: GroupMessageEvent):
         tracks: List[List[Tuple[str, int]]] = []
         bpm = self.config.DEFAULT_BPM
